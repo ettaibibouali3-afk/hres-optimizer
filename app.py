@@ -491,8 +491,6 @@ st.markdown("""
     <div class="hero-subtitle">Intelligent Sizing of Off-Grid Hybrid PV-Wind-Battery Systems</div>
     <div style="text-align: center;">
         <span class="hero-badge">🔬 Research Tool</span>
-        <span class="hero-badge"> </span>
-        <span class="hero-badge">🤖 </span>
     </div>
 </div>
 """, unsafe_allow_html=True)
