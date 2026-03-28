@@ -40,10 +40,6 @@ st.markdown("""
         background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
     }
     
-    section[data-testid="stSidebar"] * {
-        color: #f1f5f9 !important;
-    }
-    
     section[data-testid="stSidebar"] h1,
     section[data-testid="stSidebar"] h2,
     section[data-testid="stSidebar"] h3,
@@ -81,6 +77,39 @@ st.markdown("""
         border-color: rgba(148, 163, 184, 0.3) !important;
     }
     
+    /* ============================================
+       INPUT FIELDS - DARK BACKGROUND WITH WHITE TEXT
+       ============================================ */
+    section[data-testid="stSidebar"] input,
+    section[data-testid="stSidebar"] .stNumberInput input,
+    section[data-testid="stSidebar"] .stTextInput input {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+        border: 1px solid #475569 !important;
+        border-radius: 8px !important;
+    }
+    
+    section[data-testid="stSidebar"] .stNumberInput input:focus,
+    section[data-testid="stSidebar"] .stTextInput input:focus {
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2) !important;
+    }
+    
+    /* Select boxes */
+    section[data-testid="stSidebar"] .stSelectbox > div > div,
+    section[data-testid="stSidebar"] .stMultiSelect > div > div {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+        border: 1px solid #475569 !important;
+        border-radius: 8px !important;
+    }
+    
+    section[data-testid="stSidebar"] .stSelectbox > div > div > div,
+    section[data-testid="stSidebar"] .stMultiSelect > div > div > div {
+        color: #ffffff !important;
+    }
+    
+    /* Slider */
     section[data-testid="stSidebar"] .stSlider > div > div > div > div {
         color: #ffffff !important;
     }
@@ -478,28 +507,67 @@ st.markdown("""
 # ============================================================
 st.markdown("""
 <div class="hero-container">
-    <div class="hero-title">⚡ Optimization of Off-Grid Hybrid PV-Wind Systems</div>
-    <div class="hero-subtitle">Intelligent Sizing for Enhanced Reliability and Cost Efficiency</div>
+    <div class="hero-title">⚡ Off-Grid Hybrid PV-Wind-Battery Optimizer</div>
+    <div class="hero-subtitle">Intelligent System Sizing for Any Location Worldwide</div>
     <div style="text-align: center;">
         <span class="hero-badge">🔬 Research Tool</span>
-        <span class="hero-badge">🇲🇦 Morocco</span>
+        <span class="hero-badge">🌍 Worldwide</span>
         <span class="hero-badge">📊 PVGIS Data</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 # ============================================================
-# MOROCCO SITES DATA
+# WORLDWIDE SITES DATA
 # ============================================================
-MOROCCO_SITES = {
-    "Ouarzazate": {"lat": 30.92, "lon": -6.90, "climate": "Desert", "icon": "🏜️", "color": "#f59e0b"},
-    "Dakhla": {"lat": 23.72, "lon": -15.93, "climate": "Coastal", "icon": "🌊", "color": "#3b82f6"},
-    "Tangier": {"lat": 35.78, "lon": -5.81, "climate": "Mediterranean", "icon": "🌿", "color": "#10b981"},
-    "Ifrane": {"lat": 33.53, "lon": -5.11, "climate": "Mountain", "icon": "🏔️", "color": "#8b5cf6"},
-    "Marrakech": {"lat": 31.63, "lon": -8.01, "climate": "Semi-arid", "icon": "🌴", "color": "#ec4899"},
-    "Casablanca": {"lat": 33.57, "lon": -7.59, "climate": "Coastal", "icon": "🏙️", "color": "#06b6d4"},
-    "Fes": {"lat": 34.03, "lon": -5.00, "climate": "Continental", "icon": "🕌", "color": "#f97316"},
-    "Agadir": {"lat": 30.43, "lon": -9.60, "climate": "Semi-arid", "icon": "☀️", "color": "#eab308"},
+PRESET_SITES = {
+    # Africa
+    "Ouarzazate, Morocco": {"lat": 30.92, "lon": -6.90, "climate": "Desert", "icon": "🏜️", "color": "#f59e0b"},
+    "Dakhla, Morocco": {"lat": 23.72, "lon": -15.93, "climate": "Coastal", "icon": "🌊", "color": "#3b82f6"},
+    "Tangier, Morocco": {"lat": 35.78, "lon": -5.81, "climate": "Mediterranean", "icon": "🌿", "color": "#10b981"},
+    "Marrakech, Morocco": {"lat": 31.63, "lon": -8.01, "climate": "Semi-arid", "icon": "🌴", "color": "#ec4899"},
+    "Cairo, Egypt": {"lat": 30.04, "lon": 31.24, "climate": "Desert", "icon": "🏛️", "color": "#eab308"},
+    "Nairobi, Kenya": {"lat": -1.29, "lon": 36.82, "climate": "Tropical", "icon": "🦁", "color": "#22c55e"},
+    "Cape Town, South Africa": {"lat": -33.93, "lon": 18.42, "climate": "Mediterranean", "icon": "🏔️", "color": "#06b6d4"},
+    # Europe
+    "Madrid, Spain": {"lat": 40.42, "lon": -3.70, "climate": "Mediterranean", "icon": "🇪🇸", "color": "#ef4444"},
+    "Lisbon, Portugal": {"lat": 38.72, "lon": -9.14, "climate": "Mediterranean", "icon": "🇵🇹", "color": "#22c55e"},
+    "Rome, Italy": {"lat": 41.90, "lon": 12.50, "climate": "Mediterranean", "icon": "🇮🇹", "color": "#10b981"},
+    "Berlin, Germany": {"lat": 52.52, "lon": 13.40, "climate": "Temperate", "icon": "🇩🇪", "color": "#64748b"},
+    "Paris, France": {"lat": 48.86, "lon": 2.35, "climate": "Temperate", "icon": "🇫🇷", "color": "#3b82f6"},
+    "Athens, Greece": {"lat": 37.98, "lon": 23.73, "climate": "Mediterranean", "icon": "🏛️", "color": "#0ea5e9"},
+    # Middle East
+    "Dubai, UAE": {"lat": 25.20, "lon": 55.27, "climate": "Desert", "icon": "🏙️", "color": "#f59e0b"},
+    "Riyadh, Saudi Arabia": {"lat": 24.69, "lon": 46.72, "climate": "Desert", "icon": "🏜️", "color": "#eab308"},
+    "Tel Aviv, Israel": {"lat": 32.08, "lon": 34.78, "climate": "Mediterranean", "icon": "🇮🇱", "color": "#3b82f6"},
+    # Asia
+    "New Delhi, India": {"lat": 28.61, "lon": 77.21, "climate": "Semi-arid", "icon": "🇮🇳", "color": "#f97316"},
+    "Mumbai, India": {"lat": 19.08, "lon": 72.88, "climate": "Tropical", "icon": "🌆", "color": "#8b5cf6"},
+    "Beijing, China": {"lat": 39.90, "lon": 116.41, "climate": "Continental", "icon": "🇨🇳", "color": "#dc2626"},
+    "Tokyo, Japan": {"lat": 35.68, "lon": 139.69, "climate": "Humid", "icon": "🇯🇵", "color": "#ec4899"},
+    "Bangkok, Thailand": {"lat": 13.76, "lon": 100.50, "climate": "Tropical", "icon": "🇹🇭", "color": "#22c55e"},
+    "Singapore": {"lat": 1.35, "lon": 103.82, "climate": "Tropical", "icon": "🇸🇬", "color": "#ef4444"},
+    # Americas
+    "Phoenix, USA": {"lat": 33.45, "lon": -112.07, "climate": "Desert", "icon": "🌵", "color": "#f59e0b"},
+    "Los Angeles, USA": {"lat": 34.05, "lon": -118.24, "climate": "Mediterranean", "icon": "🌴", "color": "#f97316"},
+    "Miami, USA": {"lat": 25.76, "lon": -80.19, "climate": "Tropical", "icon": "🏖️", "color": "#06b6d4"},
+    "Mexico City, Mexico": {"lat": 19.43, "lon": -99.13, "climate": "Subtropical", "icon": "🇲🇽", "color": "#22c55e"},
+    "São Paulo, Brazil": {"lat": -23.55, "lon": -46.63, "climate": "Tropical", "icon": "🇧🇷", "color": "#eab308"},
+    "Santiago, Chile": {"lat": -33.45, "lon": -70.67, "climate": "Mediterranean", "icon": "🇨🇱", "color": "#dc2626"},
+    # Oceania
+    "Sydney, Australia": {"lat": -33.87, "lon": 151.21, "climate": "Temperate", "icon": "🇦🇺", "color": "#0ea5e9"},
+    "Perth, Australia": {"lat": -31.95, "lon": 115.86, "climate": "Mediterranean", "icon": "☀️", "color": "#f59e0b"},
+    "Auckland, New Zealand": {"lat": -36.85, "lon": 174.76, "climate": "Temperate", "icon": "🇳🇿", "color": "#22c55e"},
+}
+
+# Region definitions
+REGIONS = {
+    "🌍 Africa": ["Ouarzazate, Morocco", "Dakhla, Morocco", "Tangier, Morocco", "Marrakech, Morocco", "Cairo, Egypt", "Nairobi, Kenya", "Cape Town, South Africa"],
+    "🇪🇺 Europe": ["Madrid, Spain", "Lisbon, Portugal", "Rome, Italy", "Berlin, Germany", "Paris, France", "Athens, Greece"],
+    "🕌 Middle East": ["Dubai, UAE", "Riyadh, Saudi Arabia", "Tel Aviv, Israel"],
+    "🌏 Asia": ["New Delhi, India", "Mumbai, India", "Beijing, China", "Tokyo, Japan", "Bangkok, Thailand", "Singapore"],
+    "🌎 Americas": ["Phoenix, USA", "Los Angeles, USA", "Miami, USA", "Mexico City, Mexico", "São Paulo, Brazil", "Santiago, Chile"],
+    "🌊 Oceania": ["Sydney, Australia", "Perth, Australia", "Auckland, New Zealand"],
 }
 
 # ============================================================
@@ -510,21 +578,24 @@ with st.sidebar:
     
     # Site Selection
     st.markdown("### 📍 Location")
-    site_option = st.radio("Select type:", ["Predefined Sites", "Custom Location"])
+    site_option = st.radio("Select type:", ["Preset Locations", "Custom Coordinates"])
     
-    if site_option == "Predefined Sites":
+    if site_option == "Preset Locations":
+        selected_region = st.selectbox("Select region:", list(REGIONS.keys()))
         selected_sites = st.multiselect(
             "Select site(s):",
-            list(MOROCCO_SITES.keys()),
-            default=["Ouarzazate"]
+            REGIONS[selected_region],
+            default=[REGIONS[selected_region][0]]
         )
         if not selected_sites:
-            selected_sites = ["Ouarzazate"]
+            selected_sites = [REGIONS[selected_region][0]]
     else:
-        custom_lat = st.number_input("Latitude", value=31.63, min_value=20.0, max_value=36.0)
-        custom_lon = st.number_input("Longitude", value=-8.01, min_value=-17.0, max_value=-1.0)
-        selected_sites = ["Custom"]
-        MOROCCO_SITES["Custom"] = {"lat": custom_lat, "lon": custom_lon, "climate": "Custom", "icon": "📍", "color": "#64748b"}
+        st.markdown("**Enter coordinates:**")
+        custom_lat = st.number_input("Latitude (-60 to 70)", value=30.0, min_value=-60.0, max_value=70.0, step=0.1)
+        custom_lon = st.number_input("Longitude (-180 to 180)", value=0.0, min_value=-180.0, max_value=180.0, step=0.1)
+        custom_name = st.text_input("Location name", value="Custom Location")
+        selected_sites = [custom_name]
+        PRESET_SITES[custom_name] = {"lat": custom_lat, "lon": custom_lon, "climate": "Custom", "icon": "📍", "color": "#64748b"}
     
     st.divider()
     
@@ -549,12 +620,9 @@ with st.sidebar:
     
     # Costs
     st.markdown("### 💰 Costs ($/unit)")
-    col1, col2 = st.columns(2)
-    with col1:
-        cost_pv = st.number_input("PV $/kW", value=600, step=50)
-    with col2:
-        cost_wind = st.number_input("Wind $/kW", value=1000, step=50)
-    cost_batt = st.number_input("Battery $/kWh", value=250, step=25)
+    cost_pv = st.slider("PV ($/kW)", 200, 1500, 600, step=50)
+    cost_wind = st.slider("Wind ($/kW)", 500, 2000, 1000, step=50)
+    cost_batt = st.slider("Battery ($/kWh)", 100, 500, 250, step=25)
     
     st.divider()
     
@@ -778,11 +846,16 @@ def gwo_optimize(ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost
 def fetch_data(lat, lon):
     url = "https://re.jrc.ec.europa.eu/api/v5_3/tmy"
     params = {'lat': lat, 'lon': lon, 'outputformat': 'json', 'usehorizon': 1, 'startyear': 2005, 'endyear': 2023}
-    r = requests.get(url, params=params, timeout=60)
-    df = pd.DataFrame(r.json()['outputs']['tmy_hourly'])
-    df = df.rename(columns={'G(h)': 'GHI', 'T2m': 'temp', 'WS10m': 'wind_speed'})
-    df['wind_speed'] = df['wind_speed'].clip(lower=0)
-    return df
+    try:
+        r = requests.get(url, params=params, timeout=60)
+        r.raise_for_status()
+        df = pd.DataFrame(r.json()['outputs']['tmy_hourly'])
+        df = df.rename(columns={'G(h)': 'GHI', 'T2m': 'temp', 'WS10m': 'wind_speed'})
+        df['wind_speed'] = df['wind_speed'].clip(lower=0)
+        return df
+    except Exception as e:
+        st.error(f"⚠️ Error fetching data: {str(e)}. PVGIS may not have data for this location.")
+        return None
 
 # ============================================================
 # MAIN APP
@@ -795,7 +868,7 @@ if run_optimization:
     
     with tab1:
         for site_name in selected_sites:
-            site_info = MOROCCO_SITES[site_name]
+            site_info = PRESET_SITES[site_name]
             
             # Site Header
             st.markdown(f"""
@@ -806,6 +879,10 @@ if run_optimization:
             
             with st.spinner(f"🔄 Fetching data for {site_name}..."):
                 df = fetch_data(site_info['lat'], site_info['lon'])
+            
+            if df is None:
+                st.error(f"Could not fetch data for {site_name}. Skipping...")
+                continue
             
             # Resource Metrics
             col1, col2, col3, col4 = st.columns(4)
@@ -834,11 +911,13 @@ if run_optimization:
                 </div>
                 """, unsafe_allow_html=True)
             with col4:
+                lat_dir = "N" if site_info['lat'] >= 0 else "S"
+                lon_dir = "E" if site_info['lon'] >= 0 else "W"
                 st.markdown(f"""
                 <div class="metric-card">
                     <div class="metric-icon">📍</div>
-                    <div class="metric-value" style="font-size:1.2rem;">{site_info['lat']:.2f}°N</div>
-                    <div class="metric-label">{abs(site_info['lon']):.2f}°W</div>
+                    <div class="metric-value" style="font-size:1.2rem;">{abs(site_info['lat']):.2f}°{lat_dir}</div>
+                    <div class="metric-label">{abs(site_info['lon']):.2f}°{lon_dir}</div>
                 </div>
                 """, unsafe_allow_html=True)
             
@@ -1017,7 +1096,7 @@ if run_optimization:
                     
                     comparison_data.append({
                         'Site': site_name,
-                        'Climate': MOROCCO_SITES[site_name]['climate'],
+                        'Climate': PRESET_SITES[site_name]['climate'],
                         'GHI': int(df['GHI'].sum()/1000),
                         'Wind': round(df['wind_speed'].mean(), 1),
                         'PV (kW)': round(sol[0], 1),
@@ -1033,7 +1112,7 @@ if run_optimization:
                 # Charts
                 fig = make_subplots(rows=1, cols=2, subplot_titles=('LCOE by Site', 'CAPEX by Site'))
                 
-                colors = [MOROCCO_SITES[s]['color'] for s in df_comp['Site']]
+                colors = [PRESET_SITES[s]['color'] for s in df_comp['Site']]
                 
                 fig.add_trace(go.Bar(x=df_comp['Site'], y=df_comp['LCOE (¢/kWh)'], marker_color=colors), row=1, col=1)
                 fig.add_trace(go.Bar(x=df_comp['Site'], y=df_comp['CAPEX ($)'], marker_color=colors), row=1, col=2)
@@ -1148,6 +1227,9 @@ if run_optimization:
                 
                 export_data.append({
                     'Site': site_name,
+                    'Latitude': PRESET_SITES[site_name]['lat'],
+                    'Longitude': PRESET_SITES[site_name]['lon'],
+                    'Climate': PRESET_SITES[site_name]['climate'],
                     'Algorithm': result['algorithm'],
                     'Load Type': load_type,
                     'PV (kW)': round(sol[0], 2),
@@ -1155,7 +1237,9 @@ if run_optimization:
                     'Battery (kWh)': round(sol[2], 2),
                     'CAPEX ($)': round(capex, 2),
                     'LCOE (¢/kWh)': round(lcoe_val*100, 2),
-                    'Reliability (%)': round(sim['reliability'], 2)
+                    'Reliability (%)': round(sim['reliability'], 2),
+                    'Annual GHI (kWh/m²)': int(df['GHI'].sum()/1000),
+                    'Avg Wind (m/s)': round(df['wind_speed'].mean(), 1)
                 })
         
         if export_data:
@@ -1179,7 +1263,7 @@ else:
         <div class="welcome-title">Welcome to HRES Optimizer</div>
         <div class="welcome-text">
             Configure your parameters in the sidebar and click <strong>OPTIMIZE</strong> to find the optimal 
-            hybrid renewable energy system sizing for your selected location.
+            hybrid renewable energy system sizing for any location worldwide.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1188,9 +1272,9 @@ else:
     st.markdown("""
     <div class="feature-grid">
         <div class="feature-card">
-            <div class="feature-icon">📍</div>
-            <div class="feature-title">8 Sites</div>
-            <div class="feature-desc">Moroccan locations</div>
+            <div class="feature-icon">🌍</div>
+            <div class="feature-title">30+ Sites</div>
+            <div class="feature-desc">6 Regions Worldwide</div>
         </div>
         <div class="feature-card">
             <div class="feature-icon">🧠</div>
@@ -1210,36 +1294,35 @@ else:
     </div>
     """, unsafe_allow_html=True)
     
-    # Sites Map
-    st.markdown("### 🗺️ Available Sites")
+    # World Map
+    st.markdown("### 🗺️ Available Locations")
     
     map_data = []
-    for site_name, info in MOROCCO_SITES.items():
-        if site_name != "Custom":
-            map_data.append({'lat': info['lat'], 'lon': info['lon'], 'site': site_name})
+    for site_name, info in PRESET_SITES.items():
+        map_data.append({'lat': info['lat'], 'lon': info['lon'], 'site': site_name})
     
     df_map = pd.DataFrame(map_data)
-    st.map(df_map, latitude='lat', longitude='lon', size=100)
+    st.map(df_map, latitude='lat', longitude='lon', size=50)
     
-    # Sites Info
-    col1, col2, col3, col4 = st.columns(4)
-    sites_list = list(MOROCCO_SITES.items())
-    for idx, (name, info) in enumerate(sites_list[:8]):
-        if name != "Custom":
-            with [col1, col2, col3, col4][idx % 4]:
-                st.markdown(f"""
-                <div class="site-card">
-                    <div class="site-icon">{info['icon']}</div>
-                    <div class="site-name">{name}</div>
-                    <div class="site-climate">{info['climate']}</div>
-                </div>
-                """, unsafe_allow_html=True)
+    # Region info
+    st.markdown("### 🌐 Regions")
+    cols = st.columns(6)
+    region_icons = ["🌍", "🇪🇺", "🕌", "🌏", "🌎", "🌊"]
+    for idx, (region, sites) in enumerate(REGIONS.items()):
+        with cols[idx]:
+            st.markdown(f"""
+            <div class="site-card">
+                <div class="site-icon">{region.split()[0]}</div>
+                <div class="site-name">{region.split()[1] if len(region.split()) > 1 else region}</div>
+                <div class="site-climate">{len(sites)} locations</div>
+            </div>
+            """, unsafe_allow_html=True)
 
 # Footer
 st.markdown("""
 <div class="footer">
     <div class="footer-text">
-        ⚡ Powered by PVGIS Data | © 2026 | Developed by <span style="color: #38bdf8; font-weight: 600;">Dr. Ettaibi Bouali</span>
+        ⚡ Powered by PVGIS Data | © 2026 | Developed by <span style="color: #38bdf8; font-weight: 600;">Dr. Ettaibi Bouali</span> | 🌍 Worldwide Coverage
     </div>
 </div>
 """, unsafe_allow_html=True)
