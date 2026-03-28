@@ -38,7 +38,7 @@ if "cached_params" not in st.session_state:
 @st.cache_resource
 def get_gemini_model():
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    return genai.GenerativeModel("gemini-1.5-flash")
+    return genai.GenerativeModel("gemini-2.0-flash")
 
 # ============================================================
 # CSS STYLING
