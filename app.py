@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import requests
 import plotly.graph_objects as go
-import plotly.express as px
 from plotly.subplots import make_subplots
 import google.generativeai as genai
 
@@ -18,6 +17,22 @@ st.set_page_config(
 )
 
 # ============================================================
+# SESSION STATE - MUST BE FIRST
+# ============================================================
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "optimization_results" not in st.session_state:
+    st.session_state.optimization_results = None
+if "current_context" not in st.session_state:
+    st.session_state.current_context = ""
+if "all_results" not in st.session_state:
+    st.session_state.all_results = {}
+if "has_run" not in st.session_state:
+    st.session_state.has_run = False
+if "cached_params" not in st.session_state:
+    st.session_state.cached_params = {}
+
+# ============================================================
 # INITIALIZE GEMINI AI
 # ============================================================
 @st.cache_resource
@@ -26,16 +41,13 @@ def get_gemini_model():
     return genai.GenerativeModel("gemini-1.5-flash")
 
 # ============================================================
-# PREMIUM CSS STYLING
+# CSS STYLING
 # ============================================================
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
     
-    .stApp {
-        font-family: 'Inter', sans-serif;
-    }
-    
+    .stApp { font-family: 'Inter', sans-serif; }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     
@@ -77,8 +89,6 @@ st.markdown("""
         border-radius: 24px;
         margin-bottom: 2rem;
         box-shadow: 0 25px 50px rgba(0,0,0,0.4);
-        position: relative;
-        overflow: hidden;
         border: 1px solid rgba(56, 189, 248, 0.2);
     }
     
@@ -91,8 +101,6 @@ st.markdown("""
         background-clip: text;
         text-align: center;
         margin-bottom: 0.8rem;
-        position: relative;
-        z-index: 1;
         line-height: 1.3;
     }
     
@@ -101,8 +109,6 @@ st.markdown("""
         color: #cbd5e1;
         text-align: center;
         font-weight: 400;
-        position: relative;
-        z-index: 1;
         margin-bottom: 1rem;
     }
     
@@ -131,24 +137,9 @@ st.markdown("""
         text-align: center;
     }
     
-    .metric-icon {
-        font-size: 2.2rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    .metric-value {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #ffffff;
-        margin-bottom: 0.2rem;
-    }
-    
-    .metric-label {
-        font-size: 0.8rem;
-        color: #94a3b8;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
+    .metric-icon { font-size: 2.2rem; margin-bottom: 0.5rem; }
+    .metric-value { font-size: 1.8rem; font-weight: 700; color: #ffffff; margin-bottom: 0.2rem; }
+    .metric-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
     
     .result-card {
         background: linear-gradient(145deg, #0f172a, #1e293b);
@@ -158,11 +149,7 @@ st.markdown("""
         margin-bottom: 1rem;
     }
     
-    .result-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #38bdf8;
-    }
+    .result-title { font-size: 1.5rem; font-weight: 700; color: #38bdf8; }
     
     .sizing-card {
         background: linear-gradient(145deg, #1e293b, #334155);
@@ -239,10 +226,9 @@ st.markdown("""
         padding: 1.5rem;
         border: 1px solid rgba(167, 139, 250, 0.3);
         margin-bottom: 1rem;
+        color: #f3e8ff;
+        line-height: 1.6;
     }
-    
-    .ai-title { color: #e9d5ff; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
-    .ai-content { color: #f3e8ff; line-height: 1.6; }
     
     .welcome-card {
         background: linear-gradient(145deg, #1e293b, #334155);
@@ -355,31 +341,32 @@ with st.sidebar:
     st.markdown("## Configuration")
     
     st.markdown("### Location")
-    site_option = st.radio("Select type:", ["Preset Locations", "Custom Coordinates"])
+    site_option = st.radio("Select type:", ["Preset Locations", "Custom Coordinates"], key="site_option")
     
     if site_option == "Preset Locations":
-        selected_region = st.selectbox("Select region:", list(REGIONS.keys()))
+        selected_region = st.selectbox("Select region:", list(REGIONS.keys()), key="region")
         selected_sites = st.multiselect(
             "Select site(s):",
             REGIONS[selected_region],
-            default=[REGIONS[selected_region][0]]
+            default=[REGIONS[selected_region][0]],
+            key="sites"
         )
         if not selected_sites:
             selected_sites = [REGIONS[selected_region][0]]
     else:
-        custom_lat = st.number_input("Latitude (-60 to 70)", value=30.0, min_value=-60.0, max_value=70.0, step=0.1)
-        custom_lon = st.number_input("Longitude (-180 to 180)", value=0.0, min_value=-180.0, max_value=180.0, step=0.1)
-        custom_name = st.text_input("Location name", value="Custom Location")
+        custom_lat = st.number_input("Latitude (-60 to 70)", value=30.0, min_value=-60.0, max_value=70.0, step=0.1, key="lat")
+        custom_lon = st.number_input("Longitude (-180 to 180)", value=0.0, min_value=-180.0, max_value=180.0, step=0.1, key="lon")
+        custom_name = st.text_input("Location name", value="Custom Location", key="custom_name")
         selected_sites = [custom_name]
         PRESET_SITES[custom_name] = {"lat": custom_lat, "lon": custom_lon, "climate": "Custom", "color": "#64748b"}
     
     st.divider()
     
     st.markdown("### Load Profile")
-    load_type = st.radio("Load type:", ["Fixed Load", "Variable Load"])
+    load_type = st.radio("Load type:", ["Fixed Load", "Variable Load"], key="load_type")
     
     if load_type == "Fixed Load":
-        load_kw = st.slider("Constant load (kW)", 1, 50, 5)
+        load_kw = st.slider("Constant load (kW)", 1, 50, 5, key="load_kw")
     else:
         st.info("Residential pattern: 1.5-7 kW")
         load_kw = 3.6
@@ -387,15 +374,15 @@ with st.sidebar:
     st.divider()
     
     st.markdown("### Algorithm")
-    algorithm = st.selectbox("Select algorithm:", ["PSO", "GA", "GWO", "Compare All"])
-    lpsp_target = st.slider("Max LPSP (%)", 1, 20, 5) / 100
+    algorithm = st.selectbox("Select algorithm:", ["PSO", "GA", "GWO", "Compare All"], key="algorithm")
+    lpsp_target = st.slider("Max LPSP (%)", 1, 20, 5, key="lpsp") / 100
     
     st.divider()
     
     st.markdown("### Costs")
-    cost_pv = st.slider("PV ($/kW)", 200, 1500, 600, step=50)
-    cost_wind = st.slider("Wind ($/kW)", 500, 2000, 1000, step=50)
-    cost_batt = st.slider("Battery ($/kWh)", 100, 500, 250, step=25)
+    cost_pv = st.slider("PV ($/kW)", 200, 1500, 600, step=50, key="cost_pv")
+    cost_wind = st.slider("Wind ($/kW)", 500, 2000, 1000, step=50, key="cost_wind")
+    cost_batt = st.slider("Battery ($/kWh)", 100, 500, 250, step=25, key="cost_batt")
     
     st.divider()
     
@@ -404,8 +391,8 @@ with st.sidebar:
 # ============================================================
 # CORE FUNCTIONS
 # ============================================================
-def create_load_profile(load_type, base_load=5):
-    if load_type == "Fixed Load":
+def create_load_profile(load_type_param, base_load=5):
+    if load_type_param == "Fixed Load":
         return np.full(8760, base_load)
     else:
         hourly_pattern = {
@@ -416,10 +403,10 @@ def create_load_profile(load_type, base_load=5):
         }
         return np.array([hourly_pattern[h % 24] for h in range(8760)])
 
-def pv_power(ghi, temp, P_rated):
+def pv_power(ghi, temp_arr, P_rated):
     ghi = np.array(ghi).flatten()
-    temp = np.array(temp).flatten()
-    T_cell = temp + 25 * (ghi / 800)
+    temp_arr = np.array(temp_arr).flatten()
+    T_cell = temp_arr + 25 * (ghi / 800)
     temp_factor = 1 + (-0.4 / 100) * (T_cell - 25)
     P_pv = P_rated * (ghi / 1000) * temp_factor * 0.9
     return np.clip(P_pv, 0, P_rated)
@@ -433,8 +420,8 @@ def wind_power(ws, P_rated):
     P = np.where(v_hub > 25, 0, P)
     return np.clip(P, 0, P_rated)
 
-def simulate(ghi, ws, temp, Ppv, Pw, Bc, load_profile):
-    pv = pv_power(ghi, temp, Ppv)
+def simulate(ghi, ws, temp_arr, Ppv, Pw, Bc, load_profile):
+    pv = pv_power(ghi, temp_arr, Ppv)
     wind = wind_power(ws, Pw)
     gen = pv + wind
     n = len(ghi)
@@ -474,31 +461,31 @@ def simulate(ghi, ws, temp, Ppv, Pw, Bc, load_profile):
         "Eload": Eload, "Eserved": Eserved, "lpsp": lpsp, "reliability": reliability
     }
 
-def lcoe(Ppv, Pw, Bc, Eserved, cost_pv, cost_wind, cost_batt):
-    capex = Ppv * cost_pv + Pw * cost_wind + Bc * cost_batt
+def calc_lcoe(Ppv, Pw, Bc, Eserved, c_pv, c_wind, c_batt):
+    capex = Ppv * c_pv + Pw * c_wind + Bc * c_batt
     crf = 0.08 * 1.08**25 / (1.08**25 - 1)
     annual_cost = capex * crf + capex * 0.015
     lcoe_val = annual_cost / Eserved if Eserved > 0 else float("inf")
     return lcoe_val, capex
 
-def objective(x, ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost_batt):
+def objective(x, ghi, ws, temp_arr, load_profile, lpsp_max, c_pv, c_wind, c_batt):
     Ppv, Pw, Bc = x
     if Ppv < 0 or Pw < 0 or Bc < 0:
         return 1e9
-    sim = simulate(ghi, ws, temp, Ppv, Pw, Bc, load_profile)
-    cost, _ = lcoe(Ppv, Pw, Bc, sim["Eserved"], cost_pv, cost_wind, cost_batt)
+    sim = simulate(ghi, ws, temp_arr, Ppv, Pw, Bc, load_profile)
+    cost, _ = calc_lcoe(Ppv, Pw, Bc, sim["Eserved"], c_pv, c_wind, c_batt)
     if sim["lpsp"] > lpsp_max:
         return cost + 1e6 * (sim["lpsp"] - lpsp_max)
     return cost
 
-def pso_optimize(ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost_batt, progress=None):
+def pso_optimize(ghi, ws, temp_arr, load_profile, lpsp_max, c_pv, c_wind, c_batt, progress=None):
     np.random.seed(42)
     bounds = [(5, 100), (5, 100), (50, 500)]
     n_part, n_iter = 20, 50
     parts = np.array([[np.random.uniform(b[0], b[1]) for b in bounds] for _ in range(n_part)])
     vels = np.zeros_like(parts)
     pbest = parts.copy()
-    pbest_f = np.array([objective(p, ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost_batt) for p in parts])
+    pbest_f = np.array([objective(p, ghi, ws, temp_arr, load_profile, lpsp_max, c_pv, c_wind, c_batt) for p in parts])
     gbest = pbest[np.argmin(pbest_f)].copy()
     gbest_f = np.min(pbest_f)
     hist = [gbest_f]
@@ -508,7 +495,7 @@ def pso_optimize(ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost
             r1, r2 = np.random.rand(3), np.random.rand(3)
             vels[i] = 0.7 * vels[i] + 1.5 * r1 * (pbest[i] - parts[i]) + 1.5 * r2 * (gbest - parts[i])
             parts[i] = np.clip(parts[i] + vels[i], [b[0] for b in bounds], [b[1] for b in bounds])
-            f = objective(parts[i], ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost_batt)
+            f = objective(parts[i], ghi, ws, temp_arr, load_profile, lpsp_max, c_pv, c_wind, c_batt)
             if f < pbest_f[i]:
                 pbest[i], pbest_f[i] = parts[i].copy(), f
                 if f < gbest_f:
@@ -519,12 +506,12 @@ def pso_optimize(ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost
     
     return {"solution": gbest, "fitness": gbest_f, "history": hist, "algorithm": "PSO"}
 
-def ga_optimize(ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost_batt, progress=None):
+def ga_optimize(ghi, ws, temp_arr, load_profile, lpsp_max, c_pv, c_wind, c_batt, progress=None):
     np.random.seed(42)
     bounds = [(5, 100), (5, 100), (50, 500)]
     pop_size, n_iter = 20, 50
     pop = np.array([[np.random.uniform(b[0], b[1]) for b in bounds] for _ in range(pop_size)])
-    fitness = np.array([objective(p, ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost_batt) for p in pop])
+    fitness = np.array([objective(p, ghi, ws, temp_arr, load_profile, lpsp_max, c_pv, c_wind, c_batt) for p in pop])
     gbest = pop[np.argmin(fitness)].copy()
     gbest_f = np.min(fitness)
     hist = [gbest_f]
@@ -540,7 +527,9 @@ def ga_optimize(ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost_
         for i in range(0, pop_size - 1, 2):
             if np.random.rand() < 0.8:
                 alpha = np.random.rand(3)
-                new_pop[i], new_pop[i+1] = alpha * new_pop[i] + (1-alpha) * new_pop[i+1], (1-alpha) * new_pop[i] + alpha * new_pop[i+1]
+                c1 = alpha * new_pop[i] + (1-alpha) * new_pop[i+1]
+                c2 = (1-alpha) * new_pop[i] + alpha * new_pop[i+1]
+                new_pop[i], new_pop[i+1] = c1, c2
         
         for i in range(pop_size):
             if np.random.rand() < 0.1:
@@ -551,7 +540,7 @@ def ga_optimize(ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost_
             new_pop[:, d] = np.clip(new_pop[:, d], bounds[d][0], bounds[d][1])
         
         pop = new_pop
-        fitness = np.array([objective(p, ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost_batt) for p in pop])
+        fitness = np.array([objective(p, ghi, ws, temp_arr, load_profile, lpsp_max, c_pv, c_wind, c_batt) for p in pop])
         
         if np.min(fitness) < gbest_f:
             gbest, gbest_f = pop[np.argmin(fitness)].copy(), np.min(fitness)
@@ -561,12 +550,12 @@ def ga_optimize(ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost_
     
     return {"solution": gbest, "fitness": gbest_f, "history": hist, "algorithm": "GA"}
 
-def gwo_optimize(ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost_batt, progress=None):
+def gwo_optimize(ghi, ws, temp_arr, load_profile, lpsp_max, c_pv, c_wind, c_batt, progress=None):
     np.random.seed(42)
     bounds = [(5, 100), (5, 100), (50, 500)]
     n_wolves, n_iter = 20, 50
     wolves = np.array([[np.random.uniform(b[0], b[1]) for b in bounds] for _ in range(n_wolves)])
-    fitness = np.array([objective(w, ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost_batt) for w in wolves])
+    fitness = np.array([objective(w, ghi, ws, temp_arr, load_profile, lpsp_max, c_pv, c_wind, c_batt) for w in wolves])
     
     sorted_idx = np.argsort(fitness)
     alpha, beta, delta = wolves[sorted_idx[0]].copy(), wolves[sorted_idx[1]].copy(), wolves[sorted_idx[2]].copy()
@@ -591,7 +580,7 @@ def gwo_optimize(ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost
                 
                 wolves[i, d] = np.clip((X1 + X2 + X3) / 3, bounds[d][0], bounds[d][1])
         
-        fitness = np.array([objective(w, ghi, ws, temp, load_profile, lpsp_max, cost_pv, cost_wind, cost_batt) for w in wolves])
+        fitness = np.array([objective(w, ghi, ws, temp_arr, load_profile, lpsp_max, c_pv, c_wind, c_batt) for w in wolves])
         sorted_idx = np.argsort(fitness)
         
         if fitness[sorted_idx[0]] < alpha_f:
@@ -615,42 +604,24 @@ def fetch_data(lat, lon):
         df["wind_speed"] = df["wind_speed"].clip(lower=0)
         return df
     except Exception as e:
-        st.error(f"Error fetching data: {str(e)}")
         return None
 
 # ============================================================
 # AI FUNCTIONS (FREE GEMINI)
 # ============================================================
-def get_ai_recommendations(site_name, sol, lcoe_val, capex, sim, df, cost_pv, cost_wind, cost_batt):
+def get_ai_recommendations(site_name, sol, lcoe_val, capex, sim, df, c_pv, c_wind, c_batt):
     try:
         model = get_gemini_model()
-        
-        prompt = f"""You are an expert in hybrid renewable energy systems. Analyze this system and provide 4-5 specific, actionable recommendations.
+        prompt = f"""You are an expert in hybrid renewable energy systems. Analyze and provide 4-5 specific recommendations.
 
-SYSTEM DETAILS:
-- Location: {site_name}
-- Climate: {PRESET_SITES.get(site_name, {}).get("climate", "Unknown")}
-
-OPTIMAL SIZING:
-- PV Capacity: {sol[0]:.1f} kW
-- Wind Capacity: {sol[1]:.1f} kW
-- Battery Storage: {sol[2]:.1f} kWh
-
-ECONOMICS:
-- CAPEX: ${capex:,.0f}
-- LCOE: {lcoe_val*100:.2f} cents/kWh
-
-PERFORMANCE:
+SYSTEM: {site_name}
+- PV: {sol[0]:.1f} kW, Wind: {sol[1]:.1f} kW, Battery: {sol[2]:.1f} kWh
+- CAPEX: ${capex:,.0f}, LCOE: {lcoe_val*100:.2f} c/kWh
 - Reliability: {sim["reliability"]:.1f}%
-- Annual Solar Energy: {sim["Epv"]/1000:.1f} MWh
-- Annual Wind Energy: {sim["Ew"]/1000:.1f} MWh
+- Solar: {sim["Epv"]/1000:.1f} MWh/yr, Wind: {sim["Ew"]/1000:.1f} MWh/yr
+- GHI: {df["GHI"].sum()/1000:.0f} kWh/m2/yr, Wind: {df["wind_speed"].mean():.1f} m/s
 
-RESOURCES:
-- Annual GHI: {df["GHI"].sum()/1000:.0f} kWh/m2/year
-- Average Wind Speed: {df["wind_speed"].mean():.1f} m/s
-
-Provide specific recommendations for optimization, cost reduction, and reliability. Be concise."""
-
+Provide specific, actionable recommendations. Be concise."""
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
@@ -659,29 +630,15 @@ Provide specific recommendations for optimization, cost reduction, and reliabili
 def generate_ai_report(site_name, sol, lcoe_val, capex, sim, df):
     try:
         model = get_gemini_model()
-        
-        prompt = f"""Generate a professional technical report for this hybrid renewable energy system.
+        prompt = f"""Generate a technical report for this hybrid renewable energy system.
 
 LOCATION: {site_name}
-CLIMATE: {PRESET_SITES.get(site_name, {}).get("climate", "Unknown")}
+SYSTEM: PV {sol[0]:.1f} kW, Wind {sol[1]:.1f} kW, Battery {sol[2]:.1f} kWh
+ECONOMICS: CAPEX ${capex:,.0f}, LCOE {lcoe_val*100:.2f} c/kWh
+PERFORMANCE: Reliability {sim["reliability"]:.1f}%, PV {sim["Epv"]/1000:.1f} MWh/yr, Wind {sim["Ew"]/1000:.1f} MWh/yr
 
-SYSTEM:
-- PV: {sol[0]:.1f} kW
-- Wind: {sol[1]:.1f} kW
-- Battery: {sol[2]:.1f} kWh
-
-ECONOMICS:
-- CAPEX: ${capex:,.0f}
-- LCOE: {lcoe_val*100:.2f} cents/kWh
-
-PERFORMANCE:
-- Reliability: {sim["reliability"]:.1f}%
-- PV Energy: {sim["Epv"]/1000:.1f} MWh/year
-- Wind Energy: {sim["Ew"]/1000:.1f} MWh/year
-
-Include: Executive Summary, System Configuration, Economic Analysis, Technical Performance, Recommendations, Conclusion.
+Include: Executive Summary, System Configuration, Economic Analysis, Recommendations, Conclusion.
 Format in Markdown."""
-
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
@@ -690,259 +647,339 @@ Format in Markdown."""
 def ai_chat_response(user_question, context_data):
     try:
         model = get_gemini_model()
-        
-        prompt = f"""You are an AI assistant for a hybrid renewable energy optimization platform. Answer based on this context:
+        prompt = f"""You are an AI assistant for a hybrid renewable energy optimization platform.
 
+CONTEXT:
 {context_data}
 
 USER QUESTION: {user_question}
 
-Provide a helpful, accurate answer. Use specific numbers when relevant."""
-
+Provide a helpful, accurate answer using specific numbers from the context."""
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
         return f"Error: {str(e)}"
 
 # ============================================================
-# SESSION STATE
+# MAIN APP LOGIC
 # ============================================================
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "optimization_results" not in st.session_state:
-    st.session_state.optimization_results = None
-if "current_context" not in st.session_state:
-    st.session_state.current_context = ""
 
-# ============================================================
-# MAIN APP
-# ============================================================
+# Handle optimization button
 if run_optimization:
-    all_results = {}
+    st.session_state.has_run = True
+    st.session_state.all_results = {}
+    st.session_state.cached_params = {
+        "load_type": load_type,
+        "load_kw": load_kw,
+        "algorithm": algorithm,
+        "lpsp_target": lpsp_target,
+        "cost_pv": cost_pv,
+        "cost_wind": cost_wind,
+        "cost_batt": cost_batt,
+        "selected_sites": selected_sites.copy()
+    }
+
+# Show results if optimization has been run
+if st.session_state.has_run:
+    # Use cached parameters
+    params = st.session_state.cached_params
     
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["Results", "Analysis", "Dispatch", "AI Assistant", "Export"])
     
     with tab1:
-        for site_name in selected_sites:
-            site_info = PRESET_SITES[site_name]
-            
-            st.markdown(f'<div class="result-card"><div class="result-title">{site_name} ({site_info["climate"]})</div></div>', unsafe_allow_html=True)
-            
-            with st.spinner(f"Fetching data for {site_name}..."):
-                df = fetch_data(site_info["lat"], site_info["lon"])
-            
-            if df is None:
-                continue
-            
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.markdown(f'<div class="metric-card"><div class="metric-icon">☀️</div><div class="metric-value">{df["GHI"].sum()/1000:.0f}</div><div class="metric-label">kWh/m2/year</div></div>', unsafe_allow_html=True)
-            with col2:
-                st.markdown(f'<div class="metric-card"><div class="metric-icon">💨</div><div class="metric-value">{df["wind_speed"].mean():.1f}</div><div class="metric-label">m/s avg wind</div></div>', unsafe_allow_html=True)
-            with col3:
-                st.markdown(f'<div class="metric-card"><div class="metric-icon">🌡️</div><div class="metric-value">{df["temp"].mean():.1f}</div><div class="metric-label">C avg temp</div></div>', unsafe_allow_html=True)
-            with col4:
-                lat_dir = "N" if site_info["lat"] >= 0 else "S"
-                lon_dir = "E" if site_info["lon"] >= 0 else "W"
-                st.markdown(f'<div class="metric-card"><div class="metric-icon">📍</div><div class="metric-value" style="font-size:1.2rem;">{abs(site_info["lat"]):.1f}{lat_dir}</div><div class="metric-label">{abs(site_info["lon"]):.1f}{lon_dir}</div></div>', unsafe_allow_html=True)
-            
-            st.write("")
-            
-            load_profile = create_load_profile(load_type, load_kw if load_type == "Fixed Load" else 5)
-            ghi, ws, temp = df["GHI"].values, df["wind_speed"].values, df["temp"].values
-            
-            if algorithm == "Compare All":
-                st.markdown("**Running all algorithms...**")
-                progress = st.progress(0)
+        if run_optimization:
+            # Run fresh optimization
+            for site_name in params["selected_sites"]:
+                site_info = PRESET_SITES.get(site_name, {"lat": 30, "lon": 0, "climate": "Unknown", "color": "#666"})
                 
-                results_pso = pso_optimize(ghi, ws, temp, load_profile, lpsp_target, cost_pv, cost_wind, cost_batt)
-                progress.progress(0.33)
-                results_ga = ga_optimize(ghi, ws, temp, load_profile, lpsp_target, cost_pv, cost_wind, cost_batt)
-                progress.progress(0.66)
-                results_gwo = gwo_optimize(ghi, ws, temp, load_profile, lpsp_target, cost_pv, cost_wind, cost_batt)
-                progress.progress(1.0)
+                st.markdown(f'<div class="result-card"><div class="result-title">{site_name} ({site_info["climate"]})</div></div>', unsafe_allow_html=True)
                 
-                all_algo_results = [results_pso, results_ga, results_gwo]
-                best_result = min(all_algo_results, key=lambda x: x["fitness"])
+                with st.spinner(f"Fetching data for {site_name}..."):
+                    df = fetch_data(site_info["lat"], site_info["lon"])
                 
-                best_marks = ["Yes" if r == best_result else "" for r in all_algo_results]
-                algo_data = {
-                    "Algorithm": ["PSO", "GA", "GWO"],
-                    "LCOE (c/kWh)": [round(r["fitness"]*100, 2) for r in all_algo_results],
-                    "PV (kW)": [round(r["solution"][0], 1) for r in all_algo_results],
-                    "Wind (kW)": [round(r["solution"][1], 1) for r in all_algo_results],
-                    "Battery (kWh)": [round(r["solution"][2], 1) for r in all_algo_results],
-                    "Best": best_marks
-                }
-                st.dataframe(pd.DataFrame(algo_data), use_container_width=True, hide_index=True)
+                if df is None:
+                    st.error(f"Could not fetch data for {site_name}")
+                    continue
                 
-                result = best_result
-                all_results[site_name] = {"all": all_algo_results, "best": best_result, "df": df}
-            else:
-                progress = st.progress(0)
-                if algorithm == "PSO":
-                    result = pso_optimize(ghi, ws, temp, load_profile, lpsp_target, cost_pv, cost_wind, cost_batt, progress)
-                elif algorithm == "GA":
-                    result = ga_optimize(ghi, ws, temp, load_profile, lpsp_target, cost_pv, cost_wind, cost_batt, progress)
+                # Show resource metrics
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.markdown(f'<div class="metric-card"><div class="metric-icon">☀️</div><div class="metric-value">{df["GHI"].sum()/1000:.0f}</div><div class="metric-label">kWh/m2/year</div></div>', unsafe_allow_html=True)
+                with col2:
+                    st.markdown(f'<div class="metric-card"><div class="metric-icon">💨</div><div class="metric-value">{df["wind_speed"].mean():.1f}</div><div class="metric-label">m/s avg wind</div></div>', unsafe_allow_html=True)
+                with col3:
+                    st.markdown(f'<div class="metric-card"><div class="metric-icon">🌡️</div><div class="metric-value">{df["temp"].mean():.1f}</div><div class="metric-label">C avg temp</div></div>', unsafe_allow_html=True)
+                with col4:
+                    lat_dir = "N" if site_info["lat"] >= 0 else "S"
+                    lon_dir = "E" if site_info["lon"] >= 0 else "W"
+                    st.markdown(f'<div class="metric-card"><div class="metric-icon">📍</div><div class="metric-value" style="font-size:1.2rem;">{abs(site_info["lat"]):.1f}{lat_dir}</div><div class="metric-label">{abs(site_info["lon"]):.1f}{lon_dir}</div></div>', unsafe_allow_html=True)
+                
+                st.write("")
+                
+                # Create load profile and run optimization
+                load_profile = create_load_profile(params["load_type"], params["load_kw"] if params["load_type"] == "Fixed Load" else 5)
+                ghi = df["GHI"].values
+                ws = df["wind_speed"].values
+                temp_arr = df["temp"].values
+                
+                if params["algorithm"] == "Compare All":
+                    st.markdown("**Running all algorithms...**")
+                    progress = st.progress(0)
+                    
+                    results_pso = pso_optimize(ghi, ws, temp_arr, load_profile, params["lpsp_target"], params["cost_pv"], params["cost_wind"], params["cost_batt"])
+                    progress.progress(0.33)
+                    results_ga = ga_optimize(ghi, ws, temp_arr, load_profile, params["lpsp_target"], params["cost_pv"], params["cost_wind"], params["cost_batt"])
+                    progress.progress(0.66)
+                    results_gwo = gwo_optimize(ghi, ws, temp_arr, load_profile, params["lpsp_target"], params["cost_pv"], params["cost_wind"], params["cost_batt"])
+                    progress.progress(1.0)
+                    
+                    all_algo_results = [results_pso, results_ga, results_gwo]
+                    best_result = min(all_algo_results, key=lambda x: x["fitness"])
+                    
+                    best_marks = ["Yes" if r == best_result else "" for r in all_algo_results]
+                    algo_data = {
+                        "Algorithm": ["PSO", "GA", "GWO"],
+                        "LCOE (c/kWh)": [round(r["fitness"]*100, 2) for r in all_algo_results],
+                        "PV (kW)": [round(r["solution"][0], 1) for r in all_algo_results],
+                        "Wind (kW)": [round(r["solution"][1], 1) for r in all_algo_results],
+                        "Battery (kWh)": [round(r["solution"][2], 1) for r in all_algo_results],
+                        "Best": best_marks
+                    }
+                    st.dataframe(pd.DataFrame(algo_data), use_container_width=True, hide_index=True)
+                    result = best_result
                 else:
-                    result = gwo_optimize(ghi, ws, temp, load_profile, lpsp_target, cost_pv, cost_wind, cost_batt, progress)
+                    progress = st.progress(0)
+                    if params["algorithm"] == "PSO":
+                        result = pso_optimize(ghi, ws, temp_arr, load_profile, params["lpsp_target"], params["cost_pv"], params["cost_wind"], params["cost_batt"], progress)
+                    elif params["algorithm"] == "GA":
+                        result = ga_optimize(ghi, ws, temp_arr, load_profile, params["lpsp_target"], params["cost_pv"], params["cost_wind"], params["cost_batt"], progress)
+                    else:
+                        result = gwo_optimize(ghi, ws, temp_arr, load_profile, params["lpsp_target"], params["cost_pv"], params["cost_wind"], params["cost_batt"], progress)
                 
-                all_results[site_name] = {"best": result, "df": df}
-            
-            sol = result["solution"]
-            sim = simulate(ghi, ws, temp, sol[0], sol[1], sol[2], load_profile)
-            lcoe_val, capex = lcoe(sol[0], sol[1], sol[2], sim["Eserved"], cost_pv, cost_wind, cost_batt)
-            
-            st.session_state.optimization_results = {"site_name": site_name, "sol": sol, "lcoe_val": lcoe_val, "capex": capex, "sim": sim, "df": df}
-            st.session_state.current_context = f"Location: {site_name}, PV: {sol[0]:.1f}kW, Wind: {sol[1]:.1f}kW, Battery: {sol[2]:.1f}kWh, CAPEX: ${capex:,.0f}, LCOE: {lcoe_val*100:.2f}c/kWh, Reliability: {sim['reliability']:.1f}%, GHI: {df['GHI'].sum()/1000:.0f}kWh/m2, Wind: {df['wind_speed'].mean():.1f}m/s"
-            
-            st.success(f"Optimization complete using {result['algorithm']}")
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.markdown(f'<div class="sizing-card pv"><div class="sizing-icon">☀️</div><div class="sizing-value">{sol[0]:.1f} <span class="sizing-unit">kW</span></div><div class="sizing-label">PV Capacity</div></div>', unsafe_allow_html=True)
-            with col2:
-                st.markdown(f'<div class="sizing-card wind"><div class="sizing-icon">💨</div><div class="sizing-value">{sol[1]:.1f} <span class="sizing-unit">kW</span></div><div class="sizing-label">Wind Capacity</div></div>', unsafe_allow_html=True)
-            with col3:
-                st.markdown(f'<div class="sizing-card battery"><div class="sizing-icon">🔋</div><div class="sizing-value">{sol[2]:.1f} <span class="sizing-unit">kWh</span></div><div class="sizing-label">Battery Storage</div></div>', unsafe_allow_html=True)
-            
-            st.write("")
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.markdown(f'<div class="econ-card capex"><div class="econ-value">${capex:,.0f}</div><div class="econ-label">Capital Cost</div></div>', unsafe_allow_html=True)
-            with col2:
-                st.markdown(f'<div class="econ-card lcoe"><div class="econ-value">{lcoe_val*100:.2f} c/kWh</div><div class="econ-label">Levelized Cost</div></div>', unsafe_allow_html=True)
-            with col3:
-                st.markdown(f'<div class="econ-card reliability"><div class="econ-value">{sim["reliability"]:.1f}%</div><div class="econ-label">Reliability</div></div>', unsafe_allow_html=True)
-            
-            st.write("")
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                fig_pie = go.Figure(data=[go.Pie(labels=["Solar", "Wind"], values=[sim["Epv"], sim["Ew"]], hole=0.6, marker=dict(colors=["#f59e0b", "#3b82f6"]))])
-                fig_pie.update_layout(title="Energy Mix", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"), height=300)
-                st.plotly_chart(fig_pie, use_container_width=True)
-            with col2:
-                fig_conv = go.Figure()
-                fig_conv.add_trace(go.Scatter(y=[h*100 for h in result["history"]], mode="lines", line=dict(color="#38bdf8", width=3), fill="tozeroy", fillcolor="rgba(56,189,248,0.1)"))
-                fig_conv.update_layout(title="Convergence", xaxis_title="Iteration", yaxis_title="LCOE (c/kWh)", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"), height=300)
-                st.plotly_chart(fig_conv, use_container_width=True)
-            
-            st.markdown("### AI Recommendations")
-            if st.button("Generate AI Recommendations", key=f"rec_{site_name}"):
-                with st.spinner("AI analyzing..."):
-                    recommendations = get_ai_recommendations(site_name, sol, lcoe_val, capex, sim, df, cost_pv, cost_wind, cost_batt)
-                    st.markdown(f'<div class="ai-card"><div class="ai-title">AI Recommendations</div><div class="ai-content">{recommendations}</div></div>', unsafe_allow_html=True)
-            
-            st.divider()
+                sol = result["solution"]
+                sim = simulate(ghi, ws, temp_arr, sol[0], sol[1], sol[2], load_profile)
+                lcoe_val, capex = calc_lcoe(sol[0], sol[1], sol[2], sim["Eserved"], params["cost_pv"], params["cost_wind"], params["cost_batt"])
+                
+                # Store results
+                st.session_state.all_results[site_name] = {"best": result, "df": df, "sim": sim, "lcoe_val": lcoe_val, "capex": capex}
+                st.session_state.optimization_results = {"site_name": site_name, "sol": sol, "lcoe_val": lcoe_val, "capex": capex, "sim": sim, "df": df}
+                st.session_state.current_context = f"Location: {site_name}, PV: {sol[0]:.1f}kW, Wind: {sol[1]:.1f}kW, Battery: {sol[2]:.1f}kWh, CAPEX: ${capex:,.0f}, LCOE: {lcoe_val*100:.2f}c/kWh, Reliability: {sim['reliability']:.1f}%, GHI: {df['GHI'].sum()/1000:.0f}kWh/m2, Wind: {df['wind_speed'].mean():.1f}m/s"
+                
+                st.success(f"Optimization complete using {result['algorithm']}")
+                
+                # Display results
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.markdown(f'<div class="sizing-card pv"><div class="sizing-icon">☀️</div><div class="sizing-value">{sol[0]:.1f} <span class="sizing-unit">kW</span></div><div class="sizing-label">PV Capacity</div></div>', unsafe_allow_html=True)
+                with col2:
+                    st.markdown(f'<div class="sizing-card wind"><div class="sizing-icon">💨</div><div class="sizing-value">{sol[1]:.1f} <span class="sizing-unit">kW</span></div><div class="sizing-label">Wind Capacity</div></div>', unsafe_allow_html=True)
+                with col3:
+                    st.markdown(f'<div class="sizing-card battery"><div class="sizing-icon">🔋</div><div class="sizing-value">{sol[2]:.1f} <span class="sizing-unit">kWh</span></div><div class="sizing-label">Battery Storage</div></div>', unsafe_allow_html=True)
+                
+                st.write("")
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.markdown(f'<div class="econ-card capex"><div class="econ-value">${capex:,.0f}</div><div class="econ-label">Capital Cost</div></div>', unsafe_allow_html=True)
+                with col2:
+                    st.markdown(f'<div class="econ-card lcoe"><div class="econ-value">{lcoe_val*100:.2f} c/kWh</div><div class="econ-label">Levelized Cost</div></div>', unsafe_allow_html=True)
+                with col3:
+                    st.markdown(f'<div class="econ-card reliability"><div class="econ-value">{sim["reliability"]:.1f}%</div><div class="econ-label">Reliability</div></div>', unsafe_allow_html=True)
+                
+                st.write("")
+                
+                # Charts
+                col1, col2 = st.columns(2)
+                with col1:
+                    fig_pie = go.Figure(data=[go.Pie(labels=["Solar", "Wind"], values=[sim["Epv"], sim["Ew"]], hole=0.6, marker=dict(colors=["#f59e0b", "#3b82f6"]))])
+                    fig_pie.update_layout(title="Energy Mix", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"), height=300)
+                    st.plotly_chart(fig_pie, use_container_width=True)
+                with col2:
+                    fig_conv = go.Figure()
+                    fig_conv.add_trace(go.Scatter(y=[h*100 for h in result["history"]], mode="lines", line=dict(color="#38bdf8", width=3), fill="tozeroy", fillcolor="rgba(56,189,248,0.1)"))
+                    fig_conv.update_layout(title="Convergence", xaxis_title="Iteration", yaxis_title="LCOE (c/kWh)", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"), height=300)
+                    st.plotly_chart(fig_conv, use_container_width=True)
+                
+                st.divider()
+        else:
+            # Show cached results summary
+            if st.session_state.all_results:
+                st.info("Previous optimization results loaded. Click OPTIMIZE to run again with new parameters.")
+                for site_name, data in st.session_state.all_results.items():
+                    site_info = PRESET_SITES.get(site_name, {"climate": "Unknown"})
+                    sol = data["best"]["solution"]
+                    st.markdown(f'<div class="result-card"><div class="result-title">{site_name} - PV: {sol[0]:.1f}kW | Wind: {sol[1]:.1f}kW | Battery: {sol[2]:.1f}kWh</div></div>', unsafe_allow_html=True)
     
     with tab2:
-        if len(selected_sites) == 1 and all_results:
-            site_name = selected_sites[0]
-            if site_name in all_results:
-                df = all_results[site_name]["df"]
-                st.markdown("### Monthly Resource Analysis")
-                df["month"] = pd.to_datetime(df["time(UTC)"], format="%Y%m%d:%H%M").dt.month
-                monthly_ghi = df.groupby("month")["GHI"].sum() / 1000
-                monthly_wind = df.groupby("month")["wind_speed"].mean()
-                
-                fig = make_subplots(rows=1, cols=2, subplot_titles=("Monthly Solar", "Monthly Wind"))
-                fig.add_trace(go.Bar(x=monthly_ghi.index, y=monthly_ghi.values, marker_color="#f59e0b"), row=1, col=1)
-                fig.add_trace(go.Bar(x=monthly_wind.index, y=monthly_wind.values, marker_color="#3b82f6"), row=1, col=2)
-                fig.update_layout(height=350, showlegend=False, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"))
-                st.plotly_chart(fig, use_container_width=True)
+        if st.session_state.all_results:
+            site_name = list(st.session_state.all_results.keys())[0]
+            df = st.session_state.all_results[site_name]["df"]
+            
+            st.markdown("### Monthly Resource Analysis")
+            df_copy = df.copy()
+            df_copy["month"] = pd.to_datetime(df_copy["time(UTC)"], format="%Y%m%d:%H%M").dt.month
+            monthly_ghi = df_copy.groupby("month")["GHI"].sum() / 1000
+            monthly_wind = df_copy.groupby("month")["wind_speed"].mean()
+            
+            fig = make_subplots(rows=1, cols=2, subplot_titles=("Monthly Solar (kWh/m2)", "Monthly Wind (m/s)"))
+            fig.add_trace(go.Bar(x=monthly_ghi.index, y=monthly_ghi.values, marker_color="#f59e0b"), row=1, col=1)
+            fig.add_trace(go.Bar(x=monthly_wind.index, y=monthly_wind.values, marker_color="#3b82f6"), row=1, col=2)
+            fig.update_layout(height=400, showlegend=False, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"))
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Run optimization first to see analysis.")
     
     with tab3:
-        if all_results:
-            site_name = selected_sites[0]
-            if site_name in all_results:
-                df = all_results[site_name]["df"]
-                result = all_results[site_name]["best"]
-                sol = result["solution"]
-                load_profile = create_load_profile(load_type, load_kw if load_type == "Fixed Load" else 5)
-                sim = simulate(df["GHI"].values, df["wind_speed"].values, df["temp"].values, sol[0], sol[1], sol[2], load_profile)
-                
-                st.markdown("### Hourly Dispatch (Week)")
-                hours = list(range(168))
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(x=hours, y=sim["pv"][:168], name="PV", fill="tozeroy", line=dict(color="#f59e0b")))
-                fig.add_trace(go.Scatter(x=hours, y=sim["wind"][:168], name="Wind", fill="tozeroy", line=dict(color="#3b82f6")))
-                fig.add_trace(go.Scatter(x=hours, y=load_profile[:168], name="Load", line=dict(color="#ef4444", dash="dash")))
-                fig.update_layout(xaxis_title="Hour", yaxis_title="Power (kW)", height=400, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"))
-                st.plotly_chart(fig, use_container_width=True)
-                
-                st.markdown("### Battery SoC")
-                fig_soc = go.Figure()
-                fig_soc.add_trace(go.Scatter(x=hours, y=sim["soc"][:168]*100, fill="tozeroy", line=dict(color="#10b981")))
-                fig_soc.add_hline(y=20, line_dash="dash", line_color="#ef4444")
-                fig_soc.update_layout(xaxis_title="Hour", yaxis_title="SoC (%)", height=300, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"))
-                st.plotly_chart(fig_soc, use_container_width=True)
+        if st.session_state.all_results:
+            site_name = list(st.session_state.all_results.keys())[0]
+            data = st.session_state.all_results[site_name]
+            df = data["df"]
+            sol = data["best"]["solution"]
+            
+            params = st.session_state.cached_params
+            load_profile = create_load_profile(params["load_type"], params["load_kw"] if params["load_type"] == "Fixed Load" else 5)
+            sim = simulate(df["GHI"].values, df["wind_speed"].values, df["temp"].values, sol[0], sol[1], sol[2], load_profile)
+            
+            st.markdown("### Hourly Power Dispatch (Sample Week)")
+            hours = list(range(168))
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=hours, y=sim["pv"][:168], name="PV", fill="tozeroy", line=dict(color="#f59e0b"), fillcolor="rgba(245,158,11,0.3)"))
+            fig.add_trace(go.Scatter(x=hours, y=sim["wind"][:168], name="Wind", fill="tozeroy", line=dict(color="#3b82f6"), fillcolor="rgba(59,130,246,0.3)"))
+            fig.add_trace(go.Scatter(x=hours, y=load_profile[:168], name="Load", line=dict(color="#ef4444", width=2, dash="dash")))
+            fig.update_layout(xaxis_title="Hour", yaxis_title="Power (kW)", height=400, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"), legend=dict(orientation="h", y=1.1))
+            st.plotly_chart(fig, use_container_width=True)
+            
+            st.markdown("### Battery State of Charge")
+            fig_soc = go.Figure()
+            fig_soc.add_trace(go.Scatter(x=hours, y=sim["soc"][:168]*100, fill="tozeroy", line=dict(color="#10b981"), fillcolor="rgba(16,185,129,0.2)"))
+            fig_soc.add_hline(y=20, line_dash="dash", line_color="#ef4444", annotation_text="Min SoC")
+            fig_soc.update_layout(xaxis_title="Hour", yaxis_title="SoC (%)", height=300, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"))
+            st.plotly_chart(fig_soc, use_container_width=True)
+        else:
+            st.info("Run optimization first to see dispatch.")
     
     with tab4:
         st.markdown("### AI Assistant (Free - Powered by Gemini)")
+        st.markdown("Ask questions about your optimization results!")
         
+        # Display chat history
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
         
-        if prompt := st.chat_input("Ask about your results..."):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
-            
-            with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
-                    response = ai_chat_response(prompt, st.session_state.current_context) if st.session_state.current_context else "Please run optimization first."
-                    st.markdown(response)
-            st.session_state.messages.append({"role": "assistant", "content": response})
+        # Chat input
+        user_input = st.chat_input("Ask about your results...")
         
-        if st.button("Clear Chat"):
-            st.session_state.messages = []
+        if user_input:
+            # Add user message
+            st.session_state.messages.append({"role": "user", "content": user_input})
+            
+            # Generate response
+            if st.session_state.current_context:
+                response = ai_chat_response(user_input, st.session_state.current_context)
+            else:
+                response = "Please run an optimization first so I can analyze your results."
+            
+            # Add assistant message
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            
+            # Rerun to show new messages
             st.rerun()
         
-        st.markdown("**Example questions:** Why is wind at minimum? | How to reduce CAPEX? | Is this LCOE competitive?")
+        # Clear chat and example questions
+        st.markdown("---")
+        col1, col2 = st.columns([1, 3])
+        with col1:
+            if st.button("Clear Chat", key="clear_chat"):
+                st.session_state.messages = []
+                st.rerun()
+        
+        st.markdown("**Example questions:**")
+        st.markdown("- Why is wind capacity at minimum?")
+        st.markdown("- How can I reduce CAPEX?")
+        st.markdown("- Is this LCOE competitive?")
+        st.markdown("- What if I need 99% reliability?")
+        
+        # AI Recommendations button
+        st.markdown("---")
+        if st.button("Generate AI Recommendations", key="gen_rec"):
+            if st.session_state.optimization_results:
+                res = st.session_state.optimization_results
+                with st.spinner("AI analyzing your system..."):
+                    recommendations = get_ai_recommendations(
+                        res["site_name"], res["sol"], res["lcoe_val"], res["capex"], 
+                        res["sim"], res["df"], 
+                        st.session_state.cached_params["cost_pv"],
+                        st.session_state.cached_params["cost_wind"],
+                        st.session_state.cached_params["cost_batt"]
+                    )
+                st.markdown(f'<div class="ai-card">{recommendations}</div>', unsafe_allow_html=True)
+            else:
+                st.warning("Please run optimization first.")
     
     with tab5:
         st.markdown("### Export Results")
         
-        export_data = []
-        for site_name in selected_sites:
-            if site_name in all_results:
-                result = all_results[site_name]["best"]
-                df = all_results[site_name]["df"]
-                sol = result["solution"]
-                load_profile = create_load_profile(load_type, load_kw if load_type == "Fixed Load" else 5)
-                sim = simulate(df["GHI"].values, df["wind_speed"].values, df["temp"].values, sol[0], sol[1], sol[2], load_profile)
-                lcoe_val, capex = lcoe(sol[0], sol[1], sol[2], sim["Eserved"], cost_pv, cost_wind, cost_batt)
-                
+        if st.session_state.all_results:
+            export_data = []
+            for site_name, data in st.session_state.all_results.items():
+                sol = data["best"]["solution"]
                 export_data.append({
-                    "Site": site_name, "Lat": PRESET_SITES[site_name]["lat"], "Lon": PRESET_SITES[site_name]["lon"],
-                    "Climate": PRESET_SITES[site_name]["climate"], "Algorithm": result["algorithm"],
-                    "PV (kW)": round(sol[0], 2), "Wind (kW)": round(sol[1], 2), "Battery (kWh)": round(sol[2], 2),
-                    "CAPEX ($)": round(capex, 2), "LCOE (c/kWh)": round(lcoe_val*100, 2), "Reliability (%)": round(sim["reliability"], 2)
+                    "Site": site_name,
+                    "Latitude": PRESET_SITES.get(site_name, {}).get("lat", 0),
+                    "Longitude": PRESET_SITES.get(site_name, {}).get("lon", 0),
+                    "Climate": PRESET_SITES.get(site_name, {}).get("climate", "Unknown"),
+                    "Algorithm": data["best"]["algorithm"],
+                    "PV (kW)": round(sol[0], 2),
+                    "Wind (kW)": round(sol[1], 2),
+                    "Battery (kWh)": round(sol[2], 2),
+                    "CAPEX ($)": round(data["capex"], 2),
+                    "LCOE (c/kWh)": round(data["lcoe_val"]*100, 2),
+                    "Reliability (%)": round(data["sim"]["reliability"], 2)
                 })
-        
-        if export_data:
+            
             df_export = pd.DataFrame(export_data)
             st.dataframe(df_export, use_container_width=True, hide_index=True)
-            st.download_button("Download CSV", df_export.to_csv(index=False), "hres_results.csv", "text/csv", use_container_width=True)
             
+            st.download_button(
+                "Download CSV",
+                df_export.to_csv(index=False),
+                "hres_results.csv",
+                "text/csv",
+                use_container_width=True
+            )
+            
+            st.markdown("---")
             st.markdown("### AI Report Generator")
-            if st.button("Generate AI Report", use_container_width=True):
+            if st.button("Generate AI Report", use_container_width=True, key="gen_report"):
                 if st.session_state.optimization_results:
-                    with st.spinner("Generating report..."):
-                        res = st.session_state.optimization_results
-                        report = generate_ai_report(res["site_name"], res["sol"], res["lcoe_val"], res["capex"], res["sim"], res["df"])
-                        st.markdown(report)
-                        st.download_button("Download Report", report, "hres_report.md", "text/markdown", use_container_width=True)
+                    res = st.session_state.optimization_results
+                    with st.spinner("Generating professional report..."):
+                        report = generate_ai_report(
+                            res["site_name"], res["sol"], res["lcoe_val"], 
+                            res["capex"], res["sim"], res["df"]
+                        )
+                    st.markdown(report)
+                    st.download_button(
+                        "Download Report (Markdown)",
+                        report,
+                        "hres_report.md",
+                        "text/markdown",
+                        use_container_width=True,
+                        key="download_report"
+                    )
+                else:
+                    st.warning("Please run optimization first.")
+        else:
+            st.info("Run optimization first to export results.")
 
 else:
+    # Welcome screen
     st.markdown("""
     <div class="welcome-card">
         <div class="welcome-icon">🌍</div>
         <div class="welcome-title">AI-Powered HRES Optimizer</div>
-        <div class="welcome-text">Configure parameters in sidebar and click OPTIMIZE. Now with FREE AI-powered recommendations and chat assistant!</div>
+        <div class="welcome-text">Configure parameters in the sidebar and click OPTIMIZE to find the optimal hybrid renewable energy system sizing for any location worldwide. Now with FREE AI-powered recommendations and chat assistant!</div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -951,7 +988,7 @@ else:
         <div class="feature-card"><div class="feature-icon">🌍</div><div class="feature-title">30+ Sites</div><div class="feature-desc">Worldwide</div></div>
         <div class="feature-card"><div class="feature-icon">🧠</div><div class="feature-title">3 Algorithms</div><div class="feature-desc">PSO, GA, GWO</div></div>
         <div class="feature-card"><div class="feature-icon">🤖</div><div class="feature-title">AI-Powered</div><div class="feature-desc">Free Gemini</div></div>
-        <div class="feature-card"><div class="feature-icon">📊</div><div class="feature-title">Real Data</div><div class="feature-desc">PVGIS</div></div>
+        <div class="feature-card"><div class="feature-icon">📊</div><div class="feature-title">Real Data</div><div class="feature-desc">PVGIS 2005-2023</div></div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -959,4 +996,5 @@ else:
     map_data = [{"lat": info["lat"], "lon": info["lon"]} for info in PRESET_SITES.values()]
     st.map(pd.DataFrame(map_data), latitude="lat", longitude="lon", size=50)
 
+# Footer
 st.markdown('<div class="footer"><div class="footer-text">Powered by PVGIS + Gemini AI (Free) | 2026 | Dr. Ettaibi Bouali</div></div>', unsafe_allow_html=True)
