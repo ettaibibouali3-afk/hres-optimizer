@@ -1188,7 +1188,7 @@ else:
     st.markdown("""
     <div class="welcome-card">
         <div class="welcome-icon">🌍</div>
-        <div class="welcome-title">Welcome to HRES Optimizer</div>
+        <div class="welcome-title">Welcome </div>
         <div class="welcome-text">
             Configure your parameters in the sidebar and click <strong>OPTIMIZE</strong> to find the optimal 
             hybrid renewable energy system sizing for your selected Moroccan location.
