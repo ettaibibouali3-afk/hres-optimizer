@@ -952,7 +952,7 @@ if run_optimization:
                     'PV (kW)': [f"{r['solution'][0]:.1f}" for r in all_algo_results],
                     'Wind (kW)': [f"{r['solution'][1]:.1f}" for r in all_algo_results],
                     'Battery (kWh)': [f"{r['solution'][2]:.1f}" for r in all_algo_results],
-                    'Best': ['✅' if r == best_result else '' for r in all_algo_results]
+                    'Best': ['Yes' if r == best_result else '' for r in all_algo_results]
                 }
                 st.dataframe(pd.DataFrame(algo_data), use_container_width=True, hide_index=True)
                 
