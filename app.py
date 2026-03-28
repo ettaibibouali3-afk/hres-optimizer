@@ -10,7 +10,8 @@ from plotly.subplots import make_subplots
 # PAGE CONFIG
 # ============================================================
 st.set_page_config(
-    page_title="HRES Optimizer Morocco",
+    page_title="Optimization of Off-Grid Hybrid PV-Wind Systems for Enhanced Reliability and
+Cost Efficiency",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -1253,7 +1254,7 @@ else:
 st.markdown("""
 <div class="footer">
     <div class="footer-text">
-        🔬 <strong>HRES Optimizer Morocco</strong> | Developed for IEEE Access Publication | 
+        🔬 <strong>HRES Optimizer Morocco</strong> | 
         Powered by PVGIS Data | © 2025
     </div>
 </div>
