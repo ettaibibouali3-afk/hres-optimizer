@@ -1251,7 +1251,7 @@ else:
 st.markdown("""
 <div class="footer">
     <div class="footer-text">
-        | Powered by PVGIS Data | © 2026| Developped by Dr. Ettaibi Bouali |
+        | Powered by PVGIS Data | © 2026| Developed by Dr. Ettaibi Bouali |
     </div>
 </div>
 """, unsafe_allow_html=True)
