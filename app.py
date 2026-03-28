@@ -619,7 +619,7 @@ if st.session_state.has_run:
                 ghi = df["GHI"].values
                 ws = df["wind_speed"].values
                 temp_arr = df["temp"].values
-                
+
                 if params["algorithm"] == "Compare All":
                     st.markdown("**Running all algorithms...**")
                     progress = st.progress(0)
@@ -632,24 +632,36 @@ if st.session_state.has_run:
                     progress.progress(1.0)
                     
                     all_algo_results = [results_pso, results_ga, results_gwo]
-                    best_result = min(all_algo_results, key=lambda x: x["fitness"])
                     
-                    best_marks = []
-                    for r in all_algo_results:
-                        if r == best_result:
-                            best_marks.append("Yes")
-                        else:
-                            best_marks.append("")
-                    algo_data = {
-                        "Algorithm": ["PSO", "GA", "GWO"],
-                        "LCOE (c/kWh)": [round(r["fitness"]*100, 2) for r in all_algo_results],
-                        "PV (kW)": [round(r["solution"][0], 1) for r in all_algo_results],
-                        "Wind (kW)": [round(r["solution"][1], 1) for r in all_algo_results],
-                        "Battery (kWh)": [round(r["solution"][2], 1) for r in all_algo_results],
-                        "Best": best_marks
-                    }
+                    pso_fitness = results_pso["fitness"]
+                    ga_fitness = results_ga["fitness"]
+                    gwo_fitness = results_gwo["fitness"]
+                    
+                    min_fitness = min(pso_fitness, ga_fitness, gwo_fitness)
+                    
+                    if pso_fitness == min_fitness:
+                        best_result = results_pso
+                        best_marks = ["Yes", "", ""]
+                    elif ga_fitness == min_fitness:
+                        best_result = results_ga
+                        best_marks = ["", "Yes", ""]
+                    else:
+                        best_result = results_gwo
+                        best_marks = ["", "", "Yes"]
+                    
+                    algo_data = {}
+                    algo_data["Algorithm"] = ["PSO", "GA", "GWO"]
+                    algo_data["LCOE (c/kWh)"] = [round(pso_fitness*100, 2), round(ga_fitness*100, 2), round(gwo_fitness*100, 2)]
+                    algo_data["PV (kW)"] = [round(results_pso["solution"][0], 1), round(results_ga["solution"][0], 1), round(results_gwo["solution"][0], 1)]
+                    algo_data["Wind (kW)"] = [round(results_pso["solution"][1], 1), round(results_ga["solution"][1], 1), round(results_gwo["solution"][1], 1)]
+                    algo_data["Battery (kWh)"] = [round(results_pso["solution"][2], 1), round(results_ga["solution"][2], 1), round(results_gwo["solution"][2], 1)]
+                    algo_data["Best"] = best_marks
+                    
                     st.dataframe(pd.DataFrame(algo_data), use_container_width=True, hide_index=True)
                     result = best_result
+
+
+                
                 else:
                     progress = st.progress(0)
                     if params["algorithm"] == "PSO":
