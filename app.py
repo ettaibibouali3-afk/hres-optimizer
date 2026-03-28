@@ -1251,8 +1251,7 @@ else:
 st.markdown("""
 <div class="footer">
     <div class="footer-text">
-        🔬 <strong>HRES Optimizer Morocco</strong> | 
-        Powered by PVGIS Data | © 2025
+        | Powered by PVGIS Data | © 2026| Developped by Dr. Ettaibi Bouali |
     </div>
 </div>
 """, unsafe_allow_html=True)
