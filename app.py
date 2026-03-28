@@ -10,14 +10,14 @@ from plotly.subplots import make_subplots
 # PAGE CONFIG
 # ============================================================
 st.set_page_config(
-    page_title="Optimization of Off-Grid Hybrid PV-Wind Systems for Enhanced Reliability and Cost Efficiency",
+    page_title="HRES Optimizer - Off-Grid PV-Wind-Battery Systems",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ============================================================
-# PREMIUM CSS STYLING
+# PREMIUM CSS STYLING - FIXED VERSION
 # ============================================================
 st.markdown("""
 <style>
@@ -33,15 +33,68 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     
+    /* ============================================
+       SIDEBAR - FIXED HIGH VISIBILITY
+       ============================================ */
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+    }
+    
+    section[data-testid="stSidebar"] * {
+        color: #f1f5f9 !important;
+    }
+    
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] h4 {
+        color: #38bdf8 !important;
+        font-weight: 700 !important;
+    }
+    
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] .stMarkdown,
+    section[data-testid="stSidebar"] .stRadio label,
+    section[data-testid="stSidebar"] .stRadio > div > label > div > p,
+    section[data-testid="stSidebar"] .stCheckbox label,
+    section[data-testid="stSidebar"] .stSelectbox label,
+    section[data-testid="stSidebar"] .stMultiSelect label,
+    section[data-testid="stSidebar"] .stSlider label,
+    section[data-testid="stSidebar"] .stNumberInput label,
+    section[data-testid="stSidebar"] .stTextInput label {
+        color: #ffffff !important;
+        font-weight: 500 !important;
+    }
+    
+    section[data-testid="stSidebar"] .stCaption,
+    section[data-testid="stSidebar"] small {
+        color: #94a3b8 !important;
+    }
+    
+    section[data-testid="stSidebar"] .stAlert p {
+        color: #e2e8f0 !important;
+    }
+    
+    section[data-testid="stSidebar"] hr {
+        border-color: rgba(148, 163, 184, 0.3) !important;
+    }
+    
+    section[data-testid="stSidebar"] .stSlider > div > div > div > div {
+        color: #ffffff !important;
+    }
+    
     /* Hero Header */
     .hero-container {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0c4a6e 100%);
         padding: 2.5rem 2rem;
-        border-radius: 20px;
+        border-radius: 24px;
         margin-bottom: 2rem;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.4);
         position: relative;
         overflow: hidden;
+        border: 1px solid rgba(56, 189, 248, 0.2);
     }
     
     .hero-container::before {
@@ -51,7 +104,7 @@ st.markdown("""
         left: -50%;
         width: 200%;
         height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 60%);
         animation: pulse 4s ease-in-out infinite;
     }
     
@@ -61,57 +114,62 @@ st.markdown("""
     }
     
     .hero-title {
-        font-size: 2.8rem;
+        font-size: 2.2rem;
         font-weight: 800;
-        background: linear-gradient(135deg, #00d4ff 0%, #00ff88 50%, #ffaa00 100%);
+        background: linear-gradient(135deg, #38bdf8 0%, #22d3ee 50%, #34d399 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
         text-align: center;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.8rem;
         position: relative;
         z-index: 1;
+        line-height: 1.3;
     }
     
     .hero-subtitle {
-        font-size: 1.2rem;
-        color: #a0aec0;
+        font-size: 1.1rem;
+        color: #cbd5e1;
         text-align: center;
         font-weight: 400;
         position: relative;
         z-index: 1;
+        margin-bottom: 1rem;
     }
     
     .hero-badge {
         display: inline-block;
-        background: linear-gradient(135deg, #00d4ff, #0099ff);
+        background: linear-gradient(135deg, #0ea5e9, #0284c7);
         color: white;
-        padding: 0.3rem 1rem;
+        padding: 0.4rem 1rem;
         border-radius: 20px;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         font-weight: 600;
-        margin-top: 1rem;
+        margin: 0.2rem;
         text-transform: uppercase;
         letter-spacing: 1px;
+        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
     }
     
     /* Metric Cards */
     .metric-card {
-        background: linear-gradient(145deg, #1e1e2e, #2a2a3e);
+        background: linear-gradient(145deg, #1e293b, #334155);
         border-radius: 16px;
         padding: 1.5rem;
-        border: 1px solid rgba(255,255,255,0.1);
+        border: 1px solid rgba(148, 163, 184, 0.1);
         box-shadow: 0 8px 32px rgba(0,0,0,0.2);
         transition: transform 0.3s ease, box-shadow 0.3s ease;
+        text-align: center;
     }
     
     .metric-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        border-color: rgba(56, 189, 248, 0.3);
     }
     
     .metric-icon {
-        font-size: 2rem;
+        font-size: 2.2rem;
         margin-bottom: 0.5rem;
     }
     
@@ -123,63 +181,55 @@ st.markdown("""
     }
     
     .metric-label {
-        font-size: 0.85rem;
-        color: #a0aec0;
+        font-size: 0.8rem;
+        color: #94a3b8;
         text-transform: uppercase;
         letter-spacing: 1px;
     }
     
     /* Result Cards */
     .result-card {
-        background: linear-gradient(145deg, #0f3460, #16213e);
+        background: linear-gradient(145deg, #0f172a, #1e293b);
         border-radius: 20px;
-        padding: 2rem;
-        border: 1px solid rgba(0, 212, 255, 0.2);
+        padding: 1.5rem 2rem;
+        border: 1px solid rgba(56, 189, 248, 0.2);
         margin-bottom: 1rem;
     }
     
     .result-title {
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         font-weight: 700;
-        color: #00d4ff;
-        margin-bottom: 1rem;
+        color: #38bdf8;
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
     
     /* Sizing Cards */
-    .sizing-container {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1rem;
-        margin: 1.5rem 0;
-    }
-    
     .sizing-card {
-        background: linear-gradient(145deg, #1a1a2e, #252540);
+        background: linear-gradient(145deg, #1e293b, #334155);
         border-radius: 16px;
         padding: 1.5rem;
         text-align: center;
-        border: 1px solid rgba(255,255,255,0.05);
+        border: 1px solid rgba(148, 163, 184, 0.1);
         transition: all 0.3s ease;
     }
     
     .sizing-card:hover {
-        border-color: rgba(0, 212, 255, 0.3);
+        border-color: rgba(56, 189, 248, 0.4);
         transform: scale(1.02);
     }
     
     .sizing-card.pv {
-        border-top: 3px solid #f59e0b;
+        border-top: 4px solid #f59e0b;
     }
     
     .sizing-card.wind {
-        border-top: 3px solid #3b82f6;
+        border-top: 4px solid #3b82f6;
     }
     
     .sizing-card.battery {
-        border-top: 3px solid #10b981;
+        border-top: 4px solid #10b981;
     }
     
     .sizing-icon {
@@ -195,31 +245,25 @@ st.markdown("""
     
     .sizing-unit {
         font-size: 1rem;
-        color: #a0aec0;
+        color: #94a3b8;
         font-weight: 400;
     }
     
     .sizing-label {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         color: #64748b;
-        margin-top: 0.3rem;
+        margin-top: 0.5rem;
         text-transform: uppercase;
         letter-spacing: 1px;
     }
     
     /* Economics Cards */
-    .econ-container {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1rem;
-        margin: 1.5rem 0;
-    }
-    
     .econ-card {
-        background: linear-gradient(145deg, #1a1a2e, #252540);
+        background: linear-gradient(145deg, #1e293b, #334155);
         border-radius: 16px;
-        padding: 1.2rem;
+        padding: 1.5rem;
         text-align: center;
+        border: 1px solid rgba(148, 163, 184, 0.1);
     }
     
     .econ-card.capex {
@@ -228,13 +272,13 @@ st.markdown("""
     }
     
     .econ-card.lcoe {
-        background: linear-gradient(145deg, #1e4035, #0f2922);
-        border: 1px solid rgba(16, 185, 129, 0.3);
+        background: linear-gradient(145deg, #14532d, #166534);
+        border: 1px solid rgba(34, 197, 94, 0.3);
     }
     
     .econ-card.reliability {
-        background: linear-gradient(145deg, #3d1e5f, #2a0f44);
-        border: 1px solid rgba(139, 92, 246, 0.3);
+        background: linear-gradient(145deg, #4c1d95, #5b21b6);
+        border: 1px solid rgba(167, 139, 250, 0.3);
     }
     
     .econ-value {
@@ -244,24 +288,27 @@ st.markdown("""
     }
     
     .econ-label {
-        font-size: 0.8rem;
-        color: #a0aec0;
-        margin-top: 0.3rem;
+        font-size: 0.85rem;
+        color: #cbd5e1;
+        margin-top: 0.5rem;
     }
     
     /* Site Cards */
     .site-card {
-        background: linear-gradient(145deg, #1e1e2e, #2a2a3e);
+        background: linear-gradient(145deg, #1e293b, #334155);
         border-radius: 16px;
         padding: 1.2rem;
-        border: 1px solid rgba(255,255,255,0.05);
+        border: 1px solid rgba(148, 163, 184, 0.1);
         transition: all 0.3s ease;
         cursor: pointer;
+        text-align: center;
+        margin-bottom: 0.8rem;
     }
     
     .site-card:hover {
-        border-color: rgba(0, 212, 255, 0.5);
-        box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+        border-color: rgba(56, 189, 248, 0.5);
+        box-shadow: 0 0 25px rgba(56, 189, 248, 0.2);
+        transform: translateY(-3px);
     }
     
     .site-icon {
@@ -277,21 +324,12 @@ st.markdown("""
     
     .site-climate {
         font-size: 0.85rem;
-        color: #64748b;
-    }
-    
-    /* Sidebar Styling */
-    section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-    }
-    
-    section[data-testid="stSidebar"] .stMarkdown {
-        color: #e2e8f0;
+        color: #94a3b8;
     }
     
     /* Tabs Styling */
     .stTabs [data-baseweb="tab-list"] {
-        background: linear-gradient(145deg, #1e1e2e, #2a2a3e);
+        background: linear-gradient(145deg, #1e293b, #334155);
         border-radius: 12px;
         padding: 0.5rem;
         gap: 0.5rem;
@@ -300,169 +338,127 @@ st.markdown("""
     .stTabs [data-baseweb="tab"] {
         background: transparent;
         border-radius: 8px;
-        color: #a0aec0;
+        color: #94a3b8 !important;
         font-weight: 600;
         padding: 0.8rem 1.5rem;
     }
     
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #00d4ff, #0099ff);
-        color: white;
+        background: linear-gradient(135deg, #0ea5e9, #0284c7) !important;
+        color: white !important;
     }
     
     /* Buttons */
     .stButton > button {
-        background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        padding: 0.8rem 2rem;
-        font-weight: 600;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 153, 255, 0.3);
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 0.8rem 2rem !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4) !important;
     }
     
     .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 25px rgba(0, 153, 255, 0.4);
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(14, 165, 233, 0.5) !important;
     }
     
     /* Progress Bar */
     .stProgress > div > div {
-        background: linear-gradient(90deg, #00d4ff, #00ff88);
-    }
-    
-    /* Selectbox & Inputs */
-    .stSelectbox > div > div,
-    .stMultiSelect > div > div {
-        background: #1e1e2e;
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 10px;
+        background: linear-gradient(90deg, #0ea5e9, #22d3ee, #34d399) !important;
     }
     
     /* Divider */
     hr {
-        border-color: rgba(255,255,255,0.1);
-    }
-    
-    /* Algorithm Badge */
-    .algo-badge {
-        display: inline-block;
-        padding: 0.3rem 0.8rem;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    
-    .algo-badge.pso {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-    }
-    
-    .algo-badge.ga {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
-        color: white;
-    }
-    
-    .algo-badge.gwo {
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: white;
-    }
-    
-    /* Footer */
-    .footer {
-        background: linear-gradient(145deg, #1a1a2e, #16213e);
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin-top: 2rem;
-        border: 1px solid rgba(255,255,255,0.05);
-    }
-    
-    .footer-text {
-        color: #64748b;
-        font-size: 0.85rem;
-        text-align: center;
-    }
-    
-    .footer-link {
-        color: #00d4ff;
-        text-decoration: none;
+        border-color: rgba(148, 163, 184, 0.2) !important;
     }
     
     /* Welcome Card */
     .welcome-card {
-        background: linear-gradient(145deg, #1e1e2e, #2a2a3e);
-        border-radius: 20px;
-        padding: 2rem;
-        border: 1px solid rgba(255,255,255,0.05);
+        background: linear-gradient(145deg, #1e293b, #334155);
+        border-radius: 24px;
+        padding: 3rem;
+        border: 1px solid rgba(148, 163, 184, 0.1);
         text-align: center;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
     }
     
     .welcome-icon {
-        font-size: 4rem;
-        margin-bottom: 1rem;
+        font-size: 5rem;
+        margin-bottom: 1.5rem;
     }
     
     .welcome-title {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
         font-weight: 700;
         color: #ffffff;
-        margin-bottom: 0.5rem;
+        margin-bottom: 1rem;
     }
     
     .welcome-text {
-        color: #a0aec0;
-        font-size: 1rem;
-        line-height: 1.6;
+        color: #cbd5e1;
+        font-size: 1.1rem;
+        line-height: 1.8;
+        max-width: 600px;
+        margin: 0 auto;
     }
     
     /* Feature Cards */
     .feature-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 1rem;
-        margin: 2rem 0;
+        gap: 1.5rem;
+        margin: 2.5rem 0;
     }
     
     .feature-card {
-        background: linear-gradient(145deg, #1e1e2e, #252540);
-        border-radius: 12px;
-        padding: 1.2rem;
+        background: linear-gradient(145deg, #1e293b, #334155);
+        border-radius: 16px;
+        padding: 1.5rem;
         text-align: center;
-        border: 1px solid rgba(255,255,255,0.05);
+        border: 1px solid rgba(148, 163, 184, 0.1);
         transition: all 0.3s ease;
     }
     
     .feature-card:hover {
-        border-color: rgba(0, 212, 255, 0.3);
-        transform: translateY(-3px);
+        border-color: rgba(56, 189, 248, 0.4);
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
     }
     
     .feature-icon {
-        font-size: 1.8rem;
-        margin-bottom: 0.5rem;
+        font-size: 2.5rem;
+        margin-bottom: 0.8rem;
     }
     
     .feature-title {
-        font-size: 0.9rem;
-        font-weight: 600;
+        font-size: 1rem;
+        font-weight: 700;
         color: #ffffff;
     }
     
     .feature-desc {
-        font-size: 0.75rem;
-        color: #64748b;
+        font-size: 0.85rem;
+        color: #94a3b8;
         margin-top: 0.3rem;
     }
     
-    /* Comparison Table */
-    .comparison-table {
-        background: linear-gradient(145deg, #1e1e2e, #2a2a3e);
+    /* Footer */
+    .footer {
+        background: linear-gradient(145deg, #0f172a, #1e293b);
         border-radius: 16px;
-        overflow: hidden;
+        padding: 2rem;
+        margin-top: 3rem;
+        border: 1px solid rgba(148, 163, 184, 0.1);
+        text-align: center;
+    }
+    
+    .footer-text {
+        color: #94a3b8;
+        font-size: 0.9rem;
     }
     
     /* Animation */
@@ -472,12 +468,7 @@ st.markdown("""
     }
     
     .animate-fade {
-        animation: fadeIn 0.5s ease-out;
-    }
-    
-    /* Glow Effect */
-    .glow {
-        box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        animation: fadeIn 0.6s ease-out;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -487,10 +478,12 @@ st.markdown("""
 # ============================================================
 st.markdown("""
 <div class="hero-container">
-    <div class="hero-title">⚡ Optimization of Off-Grid Hybrid PV-Wind Systems for Enhanced Reliability and Cost Efficiency</div>
-    <div class="hero-subtitle">Intelligent Sizing of Off-Grid Hybrid PV-Wind-Battery Systems</div>
+    <div class="hero-title">⚡ Optimization of Off-Grid Hybrid PV-Wind Systems</div>
+    <div class="hero-subtitle">Intelligent Sizing for Enhanced Reliability and Cost Efficiency</div>
     <div style="text-align: center;">
         <span class="hero-badge">🔬 Research Tool</span>
+        <span class="hero-badge">🇲🇦 Morocco</span>
+        <span class="hero-badge">📊 PVGIS Data</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -517,7 +510,7 @@ with st.sidebar:
     
     # Site Selection
     st.markdown("### 📍 Location")
-    site_option = st.radio("", ["Predefined Sites", "Custom Location"], label_visibility="collapsed")
+    site_option = st.radio("Select type:", ["Predefined Sites", "Custom Location"])
     
     if site_option == "Predefined Sites":
         selected_sites = st.multiselect(
@@ -537,19 +530,19 @@ with st.sidebar:
     
     # Load Profile
     st.markdown("### ⚡ Load Profile")
-    load_type = st.radio("", ["Fixed Load", "Variable Load"], label_visibility="collapsed")
+    load_type = st.radio("Load type:", ["Fixed Load", "Variable Load"])
     
     if load_type == "Fixed Load":
         load_kw = st.slider("Constant load (kW)", 1, 50, 5)
     else:
-        st.info("📊 Residential: 1.5-7 kW")
+        st.info("📊 Residential pattern: 1.5-7 kW")
         load_kw = 3.6
     
     st.divider()
     
     # Algorithm
     st.markdown("### 🧠 Algorithm")
-    algorithm = st.selectbox("", ["PSO", "GA", "GWO", "Compare All"], label_visibility="collapsed")
+    algorithm = st.selectbox("Select algorithm:", ["PSO", "GA", "GWO", "Compare All"])
     lpsp_target = st.slider("Max LPSP (%)", 1, 20, 5) / 100
     
     st.divider()
@@ -558,11 +551,9 @@ with st.sidebar:
     st.markdown("### 💰 Costs ($/unit)")
     col1, col2 = st.columns(2)
     with col1:
-        cost_pv = st.number_input("PV", value=600, step=50, label_visibility="collapsed")
-        st.caption("PV $/kW")
+        cost_pv = st.number_input("PV $/kW", value=600, step=50)
     with col2:
-        cost_wind = st.number_input("Wind", value=1000, step=50, label_visibility="collapsed")
-        st.caption("Wind $/kW")
+        cost_wind = st.number_input("Wind $/kW", value=1000, step=50)
     cost_batt = st.number_input("Battery $/kWh", value=250, step=25)
     
     st.divider()
@@ -809,7 +800,7 @@ if run_optimization:
             # Site Header
             st.markdown(f"""
             <div class="result-card animate-fade">
-                <div class="result-title">{site_info['icon']} {site_name} <span style="font-weight:400; font-size:1rem; color:#64748b;">({site_info['climate']})</span></div>
+                <div class="result-title">{site_info['icon']} {site_name} <span style="font-weight:400; font-size:1rem; color:#94a3b8;">({site_info['climate']})</span></div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -847,7 +838,7 @@ if run_optimization:
                 <div class="metric-card">
                     <div class="metric-icon">📍</div>
                     <div class="metric-value" style="font-size:1.2rem;">{site_info['lat']:.2f}°N</div>
-                    <div class="metric-label">{site_info['lon']:.2f}°W</div>
+                    <div class="metric-label">{abs(site_info['lon']):.2f}°W</div>
                 </div>
                 """, unsafe_allow_html=True)
             
@@ -967,9 +958,6 @@ if run_optimization:
             col_chart1, col_chart2 = st.columns(2)
             
             with col_chart1:
-                solar_pct = sim['Epv'] / (sim['Epv'] + sim['Ew']) * 100 if (sim['Epv'] + sim['Ew']) > 0 else 50
-                wind_pct = 100 - solar_pct
-                
                 fig_pie = go.Figure(data=[go.Pie(
                     labels=['Solar', 'Wind'],
                     values=[sim['Epv'], sim['Ew']],
@@ -994,9 +982,9 @@ if run_optimization:
                 fig_conv.add_trace(go.Scatter(
                     y=[h*100 for h in result['history']],
                     mode='lines',
-                    line=dict(color='#00d4ff', width=3),
+                    line=dict(color='#38bdf8', width=3),
                     fill='tozeroy',
-                    fillcolor='rgba(0, 212, 255, 0.1)'
+                    fillcolor='rgba(56, 189, 248, 0.1)'
                 ))
                 fig_conv.update_layout(
                     title=dict(text="Convergence", font=dict(size=16, color='white')),
@@ -1188,10 +1176,10 @@ else:
     st.markdown("""
     <div class="welcome-card">
         <div class="welcome-icon">🌍</div>
-        <div class="welcome-title">Welcome </div>
+        <div class="welcome-title">Welcome to HRES Optimizer</div>
         <div class="welcome-text">
             Configure your parameters in the sidebar and click <strong>OPTIMIZE</strong> to find the optimal 
-            hybrid renewable energy system sizing for your selected Moroccan location.
+            hybrid renewable energy system sizing for your selected location.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1251,7 +1239,7 @@ else:
 st.markdown("""
 <div class="footer">
     <div class="footer-text">
-        | Powered by PVGIS Data | © 2026| Developed by Dr. Ettaibi Bouali |
+        ⚡ Powered by PVGIS Data | © 2026 | Developed by <span style="color: #38bdf8; font-weight: 600;">Dr. Ettaibi Bouali</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
