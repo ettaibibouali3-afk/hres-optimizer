@@ -10,8 +10,7 @@ from plotly.subplots import make_subplots
 # PAGE CONFIG
 # ============================================================
 st.set_page_config(
-    page_title="Optimization of Off-Grid Hybrid PV-Wind Systems for Enhanced Reliability and
-Cost Efficiency",
+    page_title="Optimization of Off-Grid Hybrid PV-Wind Systems for Enhanced Reliability and Cost Efficiency",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
