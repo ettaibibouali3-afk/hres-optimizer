@@ -4,41 +4,26 @@ import pandas as pd
 import requests
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import google.generativeai as genai
 
 # ============================================================
 # PAGE CONFIG
 # ============================================================
 st.set_page_config(
-    page_title="HRES Optimizer - AI-Powered Off-Grid Systems",
+    page_title="HRES Optimizer - Off-Grid PV-Wind-Battery Systems",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ============================================================
-# SESSION STATE - MUST BE FIRST
+# SESSION STATE
 # ============================================================
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "optimization_results" not in st.session_state:
-    st.session_state.optimization_results = None
-if "current_context" not in st.session_state:
-    st.session_state.current_context = ""
 if "all_results" not in st.session_state:
     st.session_state.all_results = {}
 if "has_run" not in st.session_state:
     st.session_state.has_run = False
 if "cached_params" not in st.session_state:
     st.session_state.cached_params = {}
-
-# ============================================================
-# INITIALIZE GEMINI AI
-# ============================================================
-@st.cache_resource
-def get_gemini_model():
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    return genai.GenerativeModel("gemini-2.0-flash")
 
 # ============================================================
 # CSS STYLING
@@ -125,10 +110,6 @@ st.markdown("""
         letter-spacing: 1px;
     }
     
-    .hero-badge.ai {
-        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-    }
-    
     .metric-card {
         background: linear-gradient(145deg, #1e293b, #334155);
         border-radius: 16px;
@@ -182,18 +163,6 @@ st.markdown("""
     .econ-value { font-size: 1.6rem; font-weight: 700; color: #ffffff; }
     .econ-label { font-size: 0.85rem; color: #cbd5e1; margin-top: 0.5rem; }
     
-    .site-card {
-        background: linear-gradient(145deg, #1e293b, #334155);
-        border-radius: 16px;
-        padding: 1.2rem;
-        border: 1px solid rgba(148, 163, 184, 0.1);
-        text-align: center;
-        margin-bottom: 0.8rem;
-    }
-    
-    .site-name { font-size: 1.1rem; font-weight: 600; color: #ffffff; }
-    .site-climate { font-size: 0.85rem; color: #94a3b8; }
-    
     .stTabs [data-baseweb="tab-list"] {
         background: linear-gradient(145deg, #1e293b, #334155);
         border-radius: 12px;
@@ -218,16 +187,6 @@ st.markdown("""
         border: none !important;
         border-radius: 12px !important;
         font-weight: 600 !important;
-    }
-    
-    .ai-card {
-        background: linear-gradient(145deg, #4c1d95, #5b21b6);
-        border-radius: 16px;
-        padding: 1.5rem;
-        border: 1px solid rgba(167, 139, 250, 0.3);
-        margin-bottom: 1rem;
-        color: #f3e8ff;
-        line-height: 1.6;
     }
     
     .welcome-card {
@@ -278,12 +237,12 @@ st.markdown("""
 st.markdown("""
 <div class="hero-container">
     <div class="hero-title">Off-Grid Hybrid PV-Wind-Battery Optimizer</div>
-    <div class="hero-subtitle">AI-Powered Intelligent System Sizing for Any Location Worldwide</div>
+    <div class="hero-subtitle">Intelligent System Sizing for Any Location Worldwide</div>
     <div style="text-align: center;">
         <span class="hero-badge">Research Tool</span>
         <span class="hero-badge">Worldwide</span>
         <span class="hero-badge">PVGIS Data</span>
-        <span class="hero-badge ai">AI-Powered (Free)</span>
+        <span class="hero-badge">3 Algorithms</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -603,68 +562,12 @@ def fetch_data(lat, lon):
         df = df.rename(columns={"G(h)": "GHI", "T2m": "temp", "WS10m": "wind_speed"})
         df["wind_speed"] = df["wind_speed"].clip(lower=0)
         return df
-    except Exception as e:
+    except:
         return None
-
-# ============================================================
-# AI FUNCTIONS (FREE GEMINI)
-# ============================================================
-def get_ai_recommendations(site_name, sol, lcoe_val, capex, sim, df, c_pv, c_wind, c_batt):
-    try:
-        model = get_gemini_model()
-        prompt = f"""You are an expert in hybrid renewable energy systems. Analyze and provide 4-5 specific recommendations.
-
-SYSTEM: {site_name}
-- PV: {sol[0]:.1f} kW, Wind: {sol[1]:.1f} kW, Battery: {sol[2]:.1f} kWh
-- CAPEX: ${capex:,.0f}, LCOE: {lcoe_val*100:.2f} c/kWh
-- Reliability: {sim["reliability"]:.1f}%
-- Solar: {sim["Epv"]/1000:.1f} MWh/yr, Wind: {sim["Ew"]/1000:.1f} MWh/yr
-- GHI: {df["GHI"].sum()/1000:.0f} kWh/m2/yr, Wind: {df["wind_speed"].mean():.1f} m/s
-
-Provide specific, actionable recommendations. Be concise."""
-        response = model.generate_content(prompt)
-        return response.text
-    except Exception as e:
-        return f"Error: {str(e)}"
-
-def generate_ai_report(site_name, sol, lcoe_val, capex, sim, df):
-    try:
-        model = get_gemini_model()
-        prompt = f"""Generate a technical report for this hybrid renewable energy system.
-
-LOCATION: {site_name}
-SYSTEM: PV {sol[0]:.1f} kW, Wind {sol[1]:.1f} kW, Battery {sol[2]:.1f} kWh
-ECONOMICS: CAPEX ${capex:,.0f}, LCOE {lcoe_val*100:.2f} c/kWh
-PERFORMANCE: Reliability {sim["reliability"]:.1f}%, PV {sim["Epv"]/1000:.1f} MWh/yr, Wind {sim["Ew"]/1000:.1f} MWh/yr
-
-Include: Executive Summary, System Configuration, Economic Analysis, Recommendations, Conclusion.
-Format in Markdown."""
-        response = model.generate_content(prompt)
-        return response.text
-    except Exception as e:
-        return f"Error: {str(e)}"
-
-def ai_chat_response(user_question, context_data):
-    try:
-        model = get_gemini_model()
-        prompt = f"""You are an AI assistant for a hybrid renewable energy optimization platform.
-
-CONTEXT:
-{context_data}
-
-USER QUESTION: {user_question}
-
-Provide a helpful, accurate answer using specific numbers from the context."""
-        response = model.generate_content(prompt)
-        return response.text
-    except Exception as e:
-        return f"Error: {str(e)}"
 
 # ============================================================
 # MAIN APP LOGIC
 # ============================================================
-
-# Handle optimization button
 if run_optimization:
     st.session_state.has_run = True
     st.session_state.all_results = {}
@@ -679,16 +582,13 @@ if run_optimization:
         "selected_sites": selected_sites.copy()
     }
 
-# Show results if optimization has been run
 if st.session_state.has_run:
-    # Use cached parameters
     params = st.session_state.cached_params
     
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Results", "Analysis", "Dispatch", "AI Assistant", "Export"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Results", "Analysis", "Dispatch", "Export"])
     
     with tab1:
         if run_optimization:
-            # Run fresh optimization
             for site_name in params["selected_sites"]:
                 site_info = PRESET_SITES.get(site_name, {"lat": 30, "lon": 0, "climate": "Unknown", "color": "#666"})
                 
@@ -701,7 +601,6 @@ if st.session_state.has_run:
                     st.error(f"Could not fetch data for {site_name}")
                     continue
                 
-                # Show resource metrics
                 col1, col2, col3, col4 = st.columns(4)
                 with col1:
                     st.markdown(f'<div class="metric-card"><div class="metric-icon">☀️</div><div class="metric-value">{df["GHI"].sum()/1000:.0f}</div><div class="metric-label">kWh/m2/year</div></div>', unsafe_allow_html=True)
@@ -716,7 +615,6 @@ if st.session_state.has_run:
                 
                 st.write("")
                 
-                # Create load profile and run optimization
                 load_profile = create_load_profile(params["load_type"], params["load_kw"] if params["load_type"] == "Fixed Load" else 5)
                 ghi = df["GHI"].values
                 ws = df["wind_speed"].values
@@ -760,14 +658,10 @@ if st.session_state.has_run:
                 sim = simulate(ghi, ws, temp_arr, sol[0], sol[1], sol[2], load_profile)
                 lcoe_val, capex = calc_lcoe(sol[0], sol[1], sol[2], sim["Eserved"], params["cost_pv"], params["cost_wind"], params["cost_batt"])
                 
-                # Store results
                 st.session_state.all_results[site_name] = {"best": result, "df": df, "sim": sim, "lcoe_val": lcoe_val, "capex": capex}
-                st.session_state.optimization_results = {"site_name": site_name, "sol": sol, "lcoe_val": lcoe_val, "capex": capex, "sim": sim, "df": df}
-                st.session_state.current_context = f"Location: {site_name}, PV: {sol[0]:.1f}kW, Wind: {sol[1]:.1f}kW, Battery: {sol[2]:.1f}kWh, CAPEX: ${capex:,.0f}, LCOE: {lcoe_val*100:.2f}c/kWh, Reliability: {sim['reliability']:.1f}%, GHI: {df['GHI'].sum()/1000:.0f}kWh/m2, Wind: {df['wind_speed'].mean():.1f}m/s"
                 
                 st.success(f"Optimization complete using {result['algorithm']}")
                 
-                # Display results
                 col1, col2, col3 = st.columns(3)
                 with col1:
                     st.markdown(f'<div class="sizing-card pv"><div class="sizing-icon">☀️</div><div class="sizing-value">{sol[0]:.1f} <span class="sizing-unit">kW</span></div><div class="sizing-label">PV Capacity</div></div>', unsafe_allow_html=True)
@@ -788,7 +682,6 @@ if st.session_state.has_run:
                 
                 st.write("")
                 
-                # Charts
                 col1, col2 = st.columns(2)
                 with col1:
                     fig_pie = go.Figure(data=[go.Pie(labels=["Solar", "Wind"], values=[sim["Epv"], sim["Ew"]], hole=0.6, marker=dict(colors=["#f59e0b", "#3b82f6"]))])
@@ -802,11 +695,9 @@ if st.session_state.has_run:
                 
                 st.divider()
         else:
-            # Show cached results summary
             if st.session_state.all_results:
-                st.info("Previous optimization results loaded. Click OPTIMIZE to run again with new parameters.")
+                st.info("Previous results loaded. Click OPTIMIZE to run again.")
                 for site_name, data in st.session_state.all_results.items():
-                    site_info = PRESET_SITES.get(site_name, {"climate": "Unknown"})
                     sol = data["best"]["solution"]
                     st.markdown(f'<div class="result-card"><div class="result-title">{site_name} - PV: {sol[0]:.1f}kW | Wind: {sol[1]:.1f}kW | Battery: {sol[2]:.1f}kWh</div></div>', unsafe_allow_html=True)
     
@@ -827,7 +718,7 @@ if st.session_state.has_run:
             fig.update_layout(height=400, showlegend=False, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"))
             st.plotly_chart(fig, use_container_width=True)
         else:
-            st.info("Run optimization first to see analysis.")
+            st.info("Run optimization first.")
     
     with tab3:
         if st.session_state.all_results:
@@ -856,68 +747,9 @@ if st.session_state.has_run:
             fig_soc.update_layout(xaxis_title="Hour", yaxis_title="SoC (%)", height=300, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="white"))
             st.plotly_chart(fig_soc, use_container_width=True)
         else:
-            st.info("Run optimization first to see dispatch.")
+            st.info("Run optimization first.")
     
     with tab4:
-        st.markdown("### AI Assistant (Free - Powered by Gemini)")
-        st.markdown("Ask questions about your optimization results!")
-        
-        # Display chat history
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
-        
-        # Chat input
-        user_input = st.chat_input("Ask about your results...")
-        
-        if user_input:
-            # Add user message
-            st.session_state.messages.append({"role": "user", "content": user_input})
-            
-            # Generate response
-            if st.session_state.current_context:
-                response = ai_chat_response(user_input, st.session_state.current_context)
-            else:
-                response = "Please run an optimization first so I can analyze your results."
-            
-            # Add assistant message
-            st.session_state.messages.append({"role": "assistant", "content": response})
-            
-            # Rerun to show new messages
-            st.rerun()
-        
-        # Clear chat and example questions
-        st.markdown("---")
-        col1, col2 = st.columns([1, 3])
-        with col1:
-            if st.button("Clear Chat", key="clear_chat"):
-                st.session_state.messages = []
-                st.rerun()
-        
-        st.markdown("**Example questions:**")
-        st.markdown("- Why is wind capacity at minimum?")
-        st.markdown("- How can I reduce CAPEX?")
-        st.markdown("- Is this LCOE competitive?")
-        st.markdown("- What if I need 99% reliability?")
-        
-        # AI Recommendations button
-        st.markdown("---")
-        if st.button("Generate AI Recommendations", key="gen_rec"):
-            if st.session_state.optimization_results:
-                res = st.session_state.optimization_results
-                with st.spinner("AI analyzing your system..."):
-                    recommendations = get_ai_recommendations(
-                        res["site_name"], res["sol"], res["lcoe_val"], res["capex"], 
-                        res["sim"], res["df"], 
-                        st.session_state.cached_params["cost_pv"],
-                        st.session_state.cached_params["cost_wind"],
-                        st.session_state.cached_params["cost_batt"]
-                    )
-                st.markdown(f'<div class="ai-card">{recommendations}</div>', unsafe_allow_html=True)
-            else:
-                st.warning("Please run optimization first.")
-    
-    with tab5:
         st.markdown("### Export Results")
         
         if st.session_state.all_results:
@@ -948,38 +780,15 @@ if st.session_state.has_run:
                 "text/csv",
                 use_container_width=True
             )
-            
-            st.markdown("---")
-            st.markdown("### AI Report Generator")
-            if st.button("Generate AI Report", use_container_width=True, key="gen_report"):
-                if st.session_state.optimization_results:
-                    res = st.session_state.optimization_results
-                    with st.spinner("Generating professional report..."):
-                        report = generate_ai_report(
-                            res["site_name"], res["sol"], res["lcoe_val"], 
-                            res["capex"], res["sim"], res["df"]
-                        )
-                    st.markdown(report)
-                    st.download_button(
-                        "Download Report (Markdown)",
-                        report,
-                        "hres_report.md",
-                        "text/markdown",
-                        use_container_width=True,
-                        key="download_report"
-                    )
-                else:
-                    st.warning("Please run optimization first.")
         else:
-            st.info("Run optimization first to export results.")
+            st.info("Run optimization first.")
 
 else:
-    # Welcome screen
     st.markdown("""
     <div class="welcome-card">
         <div class="welcome-icon">🌍</div>
-        <div class="welcome-title">AI-Powered HRES Optimizer</div>
-        <div class="welcome-text">Configure parameters in the sidebar and click OPTIMIZE to find the optimal hybrid renewable energy system sizing for any location worldwide. Now with FREE AI-powered recommendations and chat assistant!</div>
+        <div class="welcome-title">HRES Optimizer</div>
+        <div class="welcome-text">Configure parameters in the sidebar and click OPTIMIZE to find the optimal hybrid renewable energy system sizing for any location worldwide.</div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -987,7 +796,7 @@ else:
     <div class="feature-grid">
         <div class="feature-card"><div class="feature-icon">🌍</div><div class="feature-title">30+ Sites</div><div class="feature-desc">Worldwide</div></div>
         <div class="feature-card"><div class="feature-icon">🧠</div><div class="feature-title">3 Algorithms</div><div class="feature-desc">PSO, GA, GWO</div></div>
-        <div class="feature-card"><div class="feature-icon">🤖</div><div class="feature-title">AI-Powered</div><div class="feature-desc">Free Gemini</div></div>
+        <div class="feature-card"><div class="feature-icon">⚡</div><div class="feature-title">2 Load Types</div><div class="feature-desc">Fixed & Variable</div></div>
         <div class="feature-card"><div class="feature-icon">📊</div><div class="feature-title">Real Data</div><div class="feature-desc">PVGIS 2005-2023</div></div>
     </div>
     """, unsafe_allow_html=True)
@@ -996,5 +805,4 @@ else:
     map_data = [{"lat": info["lat"], "lon": info["lon"]} for info in PRESET_SITES.values()]
     st.map(pd.DataFrame(map_data), latitude="lat", longitude="lon", size=50)
 
-# Footer
-st.markdown('<div class="footer"><div class="footer-text">Powered by PVGIS + Gemini AI (Free) | 2026 | Dr. Ettaibi Bouali</div></div>', unsafe_allow_html=True)
+st.markdown('<div class="footer"><div class="footer-text">Powered by PVGIS Data | 2026 | Dr. Ettaibi Bouali</div></div>', unsafe_allow_html=True)
