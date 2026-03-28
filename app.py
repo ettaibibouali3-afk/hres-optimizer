@@ -487,7 +487,7 @@ st.markdown("""
 # ============================================================
 st.markdown("""
 <div class="hero-container">
-    <div class="hero-title">⚡ HRES Optimizer Morocco</div>
+    <div class="hero-title">⚡ Optimization of Off-Grid Hybrid PV-Wind Systems for Enhanced Reliability and Cost Efficiency</div>
     <div class="hero-subtitle">Intelligent Sizing of Off-Grid Hybrid PV-Wind-Battery Systems</div>
     <div style="text-align: center;">
         <span class="hero-badge">🔬 Research Tool</span>
