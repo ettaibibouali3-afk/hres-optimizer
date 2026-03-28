@@ -634,7 +634,12 @@ if st.session_state.has_run:
                     all_algo_results = [results_pso, results_ga, results_gwo]
                     best_result = min(all_algo_results, key=lambda x: x["fitness"])
                     
-                    best_marks = ["Yes" if r == best_result else "" for r in all_algo_results]
+                    best_marks = []
+                    for r in all_algo_results:
+                        if r == best_result:
+                            best_marks.append("Yes")
+                        else:
+                            best_marks.append("")
                     algo_data = {
                         "Algorithm": ["PSO", "GA", "GWO"],
                         "LCOE (c/kWh)": [round(r["fitness"]*100, 2) for r in all_algo_results],
