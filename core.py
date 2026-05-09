@@ -19,8 +19,6 @@ _PDG_R_DEFAULT   = 10.0
 import numpy as np
 import pandas as pd
 import requests
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 from scipy.optimize import brentq
 import time
 import warnings
